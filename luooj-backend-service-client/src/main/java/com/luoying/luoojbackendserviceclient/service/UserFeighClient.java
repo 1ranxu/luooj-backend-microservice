@@ -7,6 +7,7 @@ import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.enums.UserRoleEnum;
 import com.luoying.luoojbackendmodel.vo.UserVO;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -20,6 +21,7 @@ import static com.luoying.luoojbackendcommon.constant.UserConstant.USER_LOGIN_ST
  * 用户服务
  *
  */
+@FeignClient(name = "luooj-backend-user-service", path = "/api/user/inner")
 public interface UserFeighClient {
 
     /**
