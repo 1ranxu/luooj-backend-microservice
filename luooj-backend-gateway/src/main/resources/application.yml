@@ -1,5 +1,26 @@
 spring:
+  application:
+    name: luooj-backend-gateway
   cloud:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
+    gateway:
+      routes:
+        - id: luooj-backend-user-service
+          uri: lb://luooj-backend-user-service
+          predicates:
+            - Path=/api/user/**
+        - id: luooj-backend-question-service
+          uri: lb://luooj-backend-question-service
+          predicates:
+            - Path=/api/question/**
+        - id: luooj-backend-judge-service
+          uri: lb://luooj-backend-judge-service
+          predicates:
+            - Path=/api/judge/**
+  main:
+    web-application-type: reactive
+
+server:
+  port: 8504
