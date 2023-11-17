@@ -5,8 +5,13 @@
     <groupId>com.luoying</groupId>
     <artifactId>luooj-backend-microservice</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
     <name>luooj-backend-microservice</name>
     <description>Luo OJ 项目</description>
+    <modules>
+        <module>luooj-backend-common</module>
+        <module>luooj-backend-model</module>
+    </modules>
     <properties>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
