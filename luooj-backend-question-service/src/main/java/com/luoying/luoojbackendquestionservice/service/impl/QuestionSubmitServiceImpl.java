@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.constant.CommonConstant;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
+import com.luoying.luoojbackendcommon.utils.SqlUtils;
 import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitAddRequest;
 import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitQueryRequest;
 import com.luoying.luoojbackendmodel.entity.Question;
@@ -17,9 +18,8 @@ import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionSubmitMapper;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
-import com.luoying.luoojbackendcommon.utils.SqlUtils;
-import com.luoying.luoojbackendserviceclient.service.JudgeService;
-import com.luoying.luoojbackendserviceclient.service.UserService;
+import com.luoying.luoojbackendserviceclient.service.JudgeFeignClient;
+import com.luoying.luoojbackendserviceclient.service.UserFeighClient;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.context.annotation.Lazy;
@@ -42,11 +42,11 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     private QuestionService questionService;
 
     @Resource
-    private UserService userService;
+    private UserFeighClient userFeighClient;
 
     @Resource
     @Lazy
-    private JudgeService judgeService;
+    private JudgeFeignClient judgeService;
 
     /**
      * 题目提交
@@ -129,7 +129,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         QuestionSubmitVO questionSubmitVO = QuestionSubmitVO.objToVo(questionSubmit);
         // 脱敏
         // 仅本人能和管理员能看见提交记录的代码
-        if (loginUser.getId() != questionSubmit.getUserId() && !userService.isAdmin(loginUser)) {
+        if (loginUser.getId() != questionSubmit.getUserId() && !userFeighClient.isAdmin(loginUser)) {
             questionSubmitVO.setCode(null);
         }
         return questionSubmitVO;

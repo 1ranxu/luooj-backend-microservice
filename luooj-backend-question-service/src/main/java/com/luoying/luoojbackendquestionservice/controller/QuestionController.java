@@ -21,7 +21,7 @@ import com.luoying.luoojbackendmodel.vo.QuestionVO;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
 
-import com.luoying.luoojbackendserviceclient.service.UserService;
+import com.luoying.luoojbackendserviceclient.service.UserFeighClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
@@ -43,7 +43,7 @@ public class QuestionController {
     private QuestionService questionService;
 
     @Resource
-    private UserService userFeignClient;
+    private UserFeighClient userFeignClient;
 
     private final static Gson GSON = new Gson();
 
