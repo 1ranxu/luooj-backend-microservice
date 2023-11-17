@@ -11,6 +11,11 @@
     <modules>
         <module>luooj-backend-common</module>
         <module>luooj-backend-model</module>
+        <module>luooj-backend-service-client</module>
+        <module>luooj-backend-user-service</module>
+        <module>luooj-backend-question-service</module>
+        <module>luooj-backend-judge-service</module>
+        <module>luooj-backend-gateway</module>
     </modules>
     <properties>
         <java.version>1.8</java.version>
