@@ -11,6 +11,7 @@ import java.util.concurrent.TimeoutException;
 public class InitRabbitMq {
     private static final String EXCHANGE_NAME = "oj_exchange";
     private static final String QUEUE_NAME = "oj_queue";
+    private static final String ROUTING_KEY = "oj_routingKey";
 
     public static void doInit() {
         try {
@@ -23,7 +24,7 @@ public class InitRabbitMq {
             // 创建队列
             channel.queueDeclare(QUEUE_NAME, true, false, false, null);
             // 绑定交换机
-            channel.queueBind(QUEUE_NAME, EXCHANGE_NAME, "oj_routingKey");
+            channel.queueBind(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY);
             log.info("消息队列启动成功");
         } catch (Exception e) {
             log.error("消息队列启动失败");
