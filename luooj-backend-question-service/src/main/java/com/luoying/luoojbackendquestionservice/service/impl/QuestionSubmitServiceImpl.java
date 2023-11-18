@@ -16,6 +16,7 @@ import com.luoying.luoojbackendmodel.enums.QuestionSubmitLanguageEnum;
 import com.luoying.luoojbackendmodel.enums.QuestionSubmitStatusEnum;
 import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionSubmitMapper;
+import com.luoying.luoojbackendquestionservice.rabbitmq.MessageProducer;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
 import com.luoying.luoojbackendserviceclient.service.JudgeFeignClient;
@@ -38,6 +39,8 @@ import java.util.stream.Collectors;
 @Service
 public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper, QuestionSubmit>
         implements QuestionSubmitService {
+    private static final String EXCHANGE_NAME = "oj_exchange";
+    private static final String ROUTING_KEY = "oj_routingKey";
     @Resource
     private QuestionService questionService;
 
@@ -47,6 +50,9 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     @Resource
     @Lazy
     private JudgeFeignClient judgeService;
+
+    @Resource
+    private MessageProducer messageProducer;
 
     /**
      * 题目提交
@@ -85,10 +91,14 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         if (!result) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "题目提交失败");
         }
+        // 发送消息
+        messageProducer.sendMessage(EXCHANGE_NAME, ROUTING_KEY, String.valueOf(questionSubmit.getId()));
+
         // 执行判题服务
-        CompletableFuture.runAsync(() -> {
+        /*CompletableFuture.runAsync(() -> {
+
             judgeService.doJudge(questionSubmit.getId());
-        });
+        });*/
 
         return questionSubmit.getQuestionId();
     }
