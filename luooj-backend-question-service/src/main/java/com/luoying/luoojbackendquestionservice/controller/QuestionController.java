@@ -23,6 +23,7 @@ import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
 
 import com.luoying.luoojbackendserviceclient.service.UserFeighClient;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RRateLimiter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,6 +45,9 @@ public class QuestionController {
 
     @Resource
     private UserFeighClient userFeignClient;
+
+    @Resource
+    private RRateLimiter rateLimiter;
 
     private final static Gson GSON = new Gson();
 
@@ -303,11 +307,15 @@ public class QuestionController {
     @PostMapping("/question_submit")
     public BaseResponse<Long> doQuestionSubmit(@RequestBody QuestionSubmitAddRequest questionSubmitAddRequest,
                                                HttpServletRequest request) {
+        if (!rateLimiter.tryAcquire()){
+            throw new BusinessException(ErrorCode.API_REQUEST_ERROR,"系统繁忙，请稍后再试");
+        }
         if (questionSubmitAddRequest == null || questionSubmitAddRequest.getQuestionId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         // 登录才能提交
         final User loginUser = userFeignClient.getLoginUser(request);
+
         long questionSubmitId = questionSubmitService.doQuestionSubmit(questionSubmitAddRequest, loginUser);
         return ResultUtils.success(questionSubmitId);
     }
