@@ -1,5 +1,10 @@
 package com.luoying.luoojbackendquestionservice.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
 import com.luoying.luoojbackendcommon.annotation.AuthCheck;
@@ -29,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -50,6 +56,10 @@ public class QuestionController {
     private RRateLimiter rateLimiter;
 
     private final static Gson GSON = new Gson();
+
+    static {
+        initFlowRules();
+    }
 
     // region 增删改查
 
@@ -305,11 +315,12 @@ public class QuestionController {
      * @param request
      */
     @PostMapping("/question_submit")
+    @SentinelResource(value = "doQuestionSubmit", blockHandler = "handleException")
     public BaseResponse<Long> doQuestionSubmit(@RequestBody QuestionSubmitAddRequest questionSubmitAddRequest,
                                                HttpServletRequest request) {
-        if (!rateLimiter.tryAcquire()){
+        /*if (!rateLimiter.tryAcquire()){
             throw new BusinessException(ErrorCode.API_REQUEST_ERROR,"系统繁忙，请稍后再试");
-        }
+        }*/
         if (questionSubmitAddRequest == null || questionSubmitAddRequest.getQuestionId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -318,6 +329,21 @@ public class QuestionController {
 
         long questionSubmitId = questionSubmitService.doQuestionSubmit(questionSubmitAddRequest, loginUser);
         return ResultUtils.success(questionSubmitId);
+    }
+    public BaseResponse<Long> handleException(BlockException exception){
+        log.info("限流异常信息"+exception);
+        return ResultUtils.success(-1L);
+    }
+
+    private static void initFlowRules(){
+        List<FlowRule> rules = new ArrayList<>();
+        FlowRule rule = new FlowRule();
+        rule.setResource("doQuestionSubmit");
+        rule.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        // Set limit QPS to 1.
+        rule.setCount(1);
+        rules.add(rule);
+        FlowRuleManager.loadRules(rules);
     }
 
 
