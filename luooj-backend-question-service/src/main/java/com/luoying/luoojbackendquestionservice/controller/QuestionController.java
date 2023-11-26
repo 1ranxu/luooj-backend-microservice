@@ -21,6 +21,7 @@ import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitQueryReque
 import com.luoying.luoojbackendmodel.entity.Question;
 import com.luoying.luoojbackendmodel.entity.QuestionSubmit;
 import com.luoying.luoojbackendmodel.entity.User;
+import com.luoying.luoojbackendmodel.enums.QuestionSubmitLanguageEnum;
 import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
 import com.luoying.luoojbackendmodel.vo.QuestionVO;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
@@ -177,7 +178,7 @@ public class QuestionController {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
         User loginUser = userFeignClient.getLoginUser(request);
-        if (!loginUser.getId().equals(question.getUserId()) && !userFeignClient.isAdmin(loginUser)){
+        if (!loginUser.getId().equals(question.getUserId()) && !userFeignClient.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         return ResultUtils.success(question);
@@ -330,12 +331,13 @@ public class QuestionController {
         long questionSubmitId = questionSubmitService.doQuestionSubmit(questionSubmitAddRequest, loginUser);
         return ResultUtils.success(questionSubmitId);
     }
-    public BaseResponse<Long> handleException(BlockException exception){
-        log.info("限流异常信息"+exception);
+
+    public BaseResponse<Long> handleException(BlockException exception) {
+        log.info("限流异常信息" + exception);
         return ResultUtils.success(-1L);
     }
 
-    private static void initFlowRules(){
+    private static void initFlowRules() {
         List<FlowRule> rules = new ArrayList<>();
         FlowRule rule = new FlowRule();
         rule.setResource("doQuestionSubmit");
@@ -367,4 +369,8 @@ public class QuestionController {
         return ResultUtils.success(questionSubmitService.getQuestionSubmitVOPage(questionPage, loginUser));
     }
 
+    @GetMapping("/get/language")
+    public BaseResponse<List<String>> getCodeLanguage() {
+        return ResultUtils.success(QuestionSubmitLanguageEnum.getValues());
+    }
 }
