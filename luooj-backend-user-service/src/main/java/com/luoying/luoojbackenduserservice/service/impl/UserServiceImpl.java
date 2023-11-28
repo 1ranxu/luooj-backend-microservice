@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.constant.CommonConstant;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
+import com.luoying.luoojbackendcommon.utils.JwtUtils;
 import com.luoying.luoojbackendcommon.utils.SqlUtils;
 import com.luoying.luoojbackendmodel.dto.user.UserQueryRequest;
 import com.luoying.luoojbackendmodel.entity.User;
@@ -22,7 +23,9 @@ import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.luoying.luoojbackendcommon.constant.UserConstant.USER_LOGIN_STATE;
@@ -104,7 +107,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         // 3. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
-        return this.getLoginUserVO(user);
+        // 4、将登录信息保持在token中，通过JWT生成token(存入id和账号)
+        Map<String, Object> tokenMap = new HashMap<>();
+        tokenMap.put("id", user.getId());
+        tokenMap.put("userAccount", user.getUserAccount());
+        String token = JwtUtils.getToken(tokenMap);
+        // 5、构造返回值
+        LoginUserVO loginUserVO = this.getLoginUserVO(user);
+        loginUserVO.setToken(token);
+        return loginUserVO;
     }
     /**
      * 获取当前登录用户

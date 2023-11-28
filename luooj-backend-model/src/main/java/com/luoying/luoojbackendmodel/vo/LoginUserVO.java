@@ -7,7 +7,6 @@ import java.util.Date;
 
 /**
  * 已登录用户视图（脱敏）
- *
  **/
 @Data
 public class LoginUserVO implements Serializable {
@@ -36,6 +35,11 @@ public class LoginUserVO implements Serializable {
      * 用户角色：user/admin/ban
      */
     private String userRole;
+
+    /**
+     * Jwt token
+     */
+    private String token;
 
     /**
      * 创建时间
