@@ -5,10 +5,7 @@ import com.luoying.luoojbackendmodel.entity.QuestionSubmit;
 import com.luoying.luoojbackendserviceclient.service.QuestionFeignClient;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -41,5 +38,10 @@ public class QuestionInnerController implements QuestionFeignClient {
     @PostMapping("/question_submit/update")
     public Boolean updateQuestionSubmitById(QuestionSubmit questionSubmit) {
         return questionSubmitService.updateById(questionSubmit);
+    }
+    @Override
+    @PostMapping("/update")
+    public Boolean updateQuestionById(@RequestBody Question question){
+        return questionService.updateById(question);
     }
 }

@@ -1,6 +1,14 @@
 package com.luoying.luoojbackendjudgeservice.rabbitmq;
 
+import com.luoying.luoojbackendcommon.common.ErrorCode;
+import com.luoying.luoojbackendcommon.exception.BusinessException;
 import com.luoying.luoojbackendjudgeservice.judge.JudgeService;
+import com.luoying.luoojbackendmodel.entity.Question;
+import com.luoying.luoojbackendmodel.entity.QuestionSubmit;
+import com.luoying.luoojbackendmodel.enums.JudgeInfoMessagenum;
+import com.luoying.luoojbackendmodel.enums.QuestionSubmitStatusEnum;
+import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
+import com.luoying.luoojbackendserviceclient.service.QuestionFeignClient;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -19,6 +27,9 @@ public class MessageConsumer {
     @Resource
     private JudgeService judgeService;
 
+    @Resource
+    private QuestionFeignClient questionFeignClient;
+
     //指定程序监听的消息队列和确认机制
     @RabbitListener(queues = {"oj_queue"}, ackMode = "MANUAL")
     public void receiveMessage(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag)
@@ -26,10 +37,35 @@ public class MessageConsumer {
         log.info("receiveMessage message={}", message);
         long questionSubmitId = Long.parseLong(message);
         try {
+            // 判题
             judgeService.doJudge(questionSubmitId);
+            // 判断是否判题成功且通过
+            QuestionSubmit questionSubmit = questionFeignClient.getQuestionSubmitById(questionSubmitId);
+            QuestionSubmitVO questionSubmitVO = QuestionSubmitVO.objToVo(questionSubmit);
+            String judgeMessage = questionSubmitVO.getJudgeInfo().getMessage();
+            if (!QuestionSubmitStatusEnum.SUCCESS.getValue().equals(questionSubmit.getStatus())
+                    || !JudgeInfoMessagenum.ACCEPTED.equals(JudgeInfoMessagenum.getEnumByValue(judgeMessage))) {
+                channel.basicNack(deliveryTag, false, false);
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "判题失败");
+            }
+            // 设置通过数
+            Long questionId = questionSubmit.getQuestionId();
+            Question question = questionFeignClient.getQuestionById(questionId);
+            Integer acceptedNum = question.getAcceptedNum();
+            Question updateQuestion = new Question();
+            synchronized (question.getAcceptedNum()) {
+                acceptedNum = acceptedNum + 1;
+                updateQuestion.setId(questionId);
+                updateQuestion.setAcceptedNum(acceptedNum);
+                boolean save = questionFeignClient.updateQuestionById(updateQuestion);
+                if (!save) {
+                    throw new BusinessException(ErrorCode.OPERATION_ERROR, "保存数据失败");
+                }
+            }
+            // 确认消息
             channel.basicAck(deliveryTag, false);
         } catch (Exception e) {
-            channel.basicNack(deliveryTag,false,false);
+            channel.basicNack(deliveryTag, false, false);
         }
     }
 }
