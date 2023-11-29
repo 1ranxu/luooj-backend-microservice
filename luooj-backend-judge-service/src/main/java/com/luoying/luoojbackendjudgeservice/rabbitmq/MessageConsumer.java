@@ -30,12 +30,18 @@ public class MessageConsumer {
     @Resource
     private QuestionFeignClient questionFeignClient;
 
+    private static final String QUEUE_NAME = "oj_queue";
     //指定程序监听的消息队列和确认机制
-    @RabbitListener(queues = {"oj_queue"}, ackMode = "MANUAL")
+    @RabbitListener(queues = {QUEUE_NAME}, ackMode = "MANUAL")
     public void receiveMessage(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag)
             throws IOException {
         log.info("receiveMessage message={}", message);
         long questionSubmitId = Long.parseLong(message);
+        if (message == null) {
+            // 消息为空，则拒绝消息（不重试），进入死信队列
+            channel.basicNack(deliveryTag, false, false);
+            throw new BusinessException(ErrorCode.NULL_ERROR, "消息为空");
+        }
         try {
             // 判题
             judgeService.doJudge(questionSubmitId);
