@@ -15,6 +15,7 @@ import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.enums.QuestionSubmitLanguageEnum;
 import com.luoying.luoojbackendmodel.enums.QuestionSubmitStatusEnum;
 import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
+import com.luoying.luoojbackendmodel.vo.QuestionVO;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionSubmitMapper;
 import com.luoying.luoojbackendquestionservice.rabbitmq.MessageProducer;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
@@ -171,16 +172,25 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         Set<Long> userIdSet = questionSubmitList.stream().map(QuestionSubmit::getUserId).collect(Collectors.toSet());
         Map<Long, List<User>> userIdUserListMap = userFeighClient.listByIds(userIdSet).stream()
                 .collect(Collectors.groupingBy(User::getId));
-        // 2. 填充信息
+        // 2. 关联查询题目信息
+        Set<Long> questionIdSet = questionSubmitList.stream().map(QuestionSubmit::getQuestionId).collect(Collectors.toSet());
+        Map<Long, List<Question>> questionIdUserListMap = questionService.listByIds(questionIdSet).stream()
+                .collect(Collectors.groupingBy(Question::getId));
+        // 3. 填充信息
         List<QuestionSubmitVO> questionSubmitVOList = questionSubmitList.stream().map(questionSubmit -> {
             QuestionSubmitVO questionSubmitVO = QuestionSubmitVO.objToVo(questionSubmit);
             Long userId = questionSubmit.getUserId();
+            Long questionId = questionSubmit.getQuestionId();
             User user = null;
+            Question question = null;
             if (userIdUserListMap.containsKey(userId)) {
                 user = userIdUserListMap.get(userId).get(0);
             }
+            if (questionIdUserListMap.containsKey(questionId)) {
+                question = questionIdUserListMap.get(questionId).get(0);
+            }
             questionSubmitVO.setUserVO(userFeighClient.getUserVO(user));
-
+            questionSubmitVO.setQuestionVO(QuestionVO.objToVo(question));
             return questionSubmitVO;
         }).collect(Collectors.toList());
         questionSubmitVOPage.setRecords(questionSubmitVOList);
