@@ -33,6 +33,15 @@ public class JavaJudgeStrategy implements JudgeStrategy {
 
         // 5 根据沙箱的执行结果，设置题目的判题状态和信息
         JudgeInfoMessagenum judgeInfoMessagenum = JudgeInfoMessagenum.ACCEPTED;
+        // 如果judgeInfo.getMessage()不为空，说明代码沙箱执行代码的过程中有异常
+        if (judgeInfo.getMessage() != null) {
+            judgeInfoMessagenum = JudgeInfoMessagenum.getEnumByValue(judgeInfo.getMessage());
+            QuestionSubmitJudgeInfo judgeInfoResponse = new QuestionSubmitJudgeInfo();
+            judgeInfoResponse.setMessage(judgeInfoMessagenum.getValue());
+            judgeInfoResponse.setMemory(Optional.ofNullable(judgeInfo.getMemory()).orElse(500L));
+            judgeInfoResponse.setTime(judgeInfo.getTime());
+            return judgeInfoResponse;
+        }
         // 5.1 先判断沙箱执行的结果输出数量是否和预期输出数量相等
         if (outputList.size() != inputList.size()) {
             judgeInfoMessagenum = JudgeInfoMessagenum.WRONG_ANSWER;
@@ -56,7 +65,7 @@ public class JavaJudgeStrategy implements JudgeStrategy {
             judgeInfoMessagenum = JudgeInfoMessagenum.MEMORY_LIMIT_EXCEEDED;
         }
         // java程序需要额外执行10秒钟
-        long JAVA_EXTRA_TIME_COST = 10L;
+        long JAVA_EXTRA_TIME_COST = 10000L;
         if (time - JAVA_EXTRA_TIME_COST > timeLimit) {
             judgeInfoMessagenum = JudgeInfoMessagenum.TIME_LIMIT_EXCEEDED;
         }
