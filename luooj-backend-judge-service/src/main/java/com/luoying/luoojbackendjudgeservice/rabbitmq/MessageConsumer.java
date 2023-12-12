@@ -48,10 +48,7 @@ public class MessageConsumer {
             // 判断是否判题成功且通过
             QuestionSubmit questionSubmit = questionFeignClient.getQuestionSubmitById(questionSubmitId);
             QuestionSubmitVO questionSubmitVO = QuestionSubmitVO.objToVo(questionSubmit);
-            String judgeMessage = questionSubmitVO.getJudgeInfo().getMessage();
-            if (!QuestionSubmitStatusEnum.SUCCESS.getValue().equals(questionSubmit.getStatus())
-                    || !JudgeInfoMessagenum.ACCEPTED.equals(JudgeInfoMessagenum.getEnumByValue(judgeMessage))) {
-                channel.basicNack(deliveryTag, false, false);
+            if (!QuestionSubmitStatusEnum.SUCCESS.getValue().equals(questionSubmit.getStatus())) {
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "判题失败");
             }
             // 设置通过数
