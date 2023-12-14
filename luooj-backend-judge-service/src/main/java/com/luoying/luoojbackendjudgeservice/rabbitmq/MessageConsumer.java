@@ -31,6 +31,7 @@ public class MessageConsumer {
     private QuestionFeignClient questionFeignClient;
 
     private static final String QUEUE_NAME = "oj_queue";
+
     //指定程序监听的消息队列和确认机制
     @RabbitListener(queues = {QUEUE_NAME}, ackMode = "MANUAL")
     public void receiveMessage(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag)
@@ -52,6 +53,11 @@ public class MessageConsumer {
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "判题失败");
             }
             // 设置通过数
+            // 判断题目是否通过
+            if (!JudgeInfoMessagenum.ACCEPTED.getValue().equals(questionSubmitVO.getJudgeInfo().getMessage())) {
+                channel.basicAck(deliveryTag, false);
+                return;
+            }
             Long questionId = questionSubmit.getQuestionId();
             Question question = questionFeignClient.getQuestionById(questionId);
             Integer acceptedNum = question.getAcceptedNum();
