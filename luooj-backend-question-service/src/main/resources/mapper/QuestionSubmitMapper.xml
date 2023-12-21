@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.luoying.luoojbackendquestionservice.mapper.QuestionSubmitMapper">
+
+    <resultMap id="BaseResultMap" type="com.luoying.luoojbackendmodel.entity.QuestionSubmit">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="language" column="language" jdbcType="VARCHAR"/>
+            <result property="questionId" column="questionId" jdbcType="BIGINT"/>
+            <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="code" column="code" jdbcType="VARCHAR"/>
+            <result property="judgeInfo" column="judgeInfo" jdbcType="VARCHAR"/>
+            <result property="status" column="status" jdbcType="INTEGER"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <insert id="addQuestionSubmit">
+        insert into ${tableName} (language, questionId, userId, code, judgeInfo, status)
+        values (#{questionSubmit.language,jdbcType=VARCHAR}, #{questionSubmit.questionId,jdbcType=BIGINT},
+                #{questionSubmit.userId,jdbcType=BIGINT}, #{questionSubmit.code,jdbcType=VARCHAR},
+                #{questionSubmit.judgeInfo,jdbcType=VARCHAR}, #{questionSubmit.status,jdbcType=INTEGER})
+    </insert>
+
+    <select id="queryQuestionSubmitList" parameterType="string" resultType="com.luoying.luoojbackendmodel.entity.QuestionSubmit">
+        select * from ${tableName}
+    </select>
+
+    <select id="existQuestionSubmitTable" parameterType="string" resultType="java.lang.Integer">
+        select count(*)
+        from information_schema.TABLES
+        where table_name = #{tableName}
+    </select>
+
+    <update id="dropQuestionSubmitTable" parameterType="string">
+        DROP TABLE IF EXISTS ${tableName}
+    </update>
+
+    <update id="createQuestionSubmitTable" parameterType="string">
+        create table ${tableName}
+        (
+            id         bigint auto_increment comment 'id'
+                primary key,
+            language   varchar(128)                       not null comment '编程语言',
+            questionId bigint                             not null comment '题目id',
+            userId     bigint                             not null comment '提交用户id',
+            code       text                               not null comment '用户提交的代码',
+            judgeInfo  varchar(128) null comment '判题信息',
+            status     int      default 0                 not null comment '判题状态（0-待判题、1-判题中、2-通过、3-失败）',
+            createTime datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+            updateTime datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+            isDelete   tinyint  default 0                 not null comment '是否删除',
+            index      idx_userId (userId),
+            index      idx_questionId (questionId)
+        ) comment '某用户的提交记录' collate = utf8mb4_unicode_ci
+    </update>
+
+    <sql id="Base_Column_List">
+        id,language,questionId,
+        userId,code,judgeInfo,
+        status,createTime,updateTime,
+        isDelete
+    </sql>
+</mapper>

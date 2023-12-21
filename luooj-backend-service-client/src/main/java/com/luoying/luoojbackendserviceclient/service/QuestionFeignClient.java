@@ -27,4 +27,27 @@ public interface QuestionFeignClient {
     @PostMapping("/update")
     Boolean updateQuestionById(@RequestBody Question question);
 
+    @GetMapping("/accepted_question/exist/table")
+    boolean existAcceptedQuestionTable(@RequestParam("tableName") String tableName);
+
+
+    @GetMapping("/accepted_question/drop/table")
+    boolean dropAcceptedQuestionTable(@RequestParam("tableName") String tableName);
+
+
+    @GetMapping("/accepted_question/create/table")
+    boolean createAcceptedQuestionTable(@RequestParam("tableName") String tableName);
+
+
+    @GetMapping("/question_submit/exist/table")
+    boolean existQuestionSubmitTable(@RequestParam("tableName") String tableName);
+
+
+    @GetMapping("/question_submit/drop/table")
+    boolean dropQuestionSubmitTable(@RequestParam("tableName") String tableName);
+
+
+    @GetMapping("/question_submit/create/table")
+    boolean createQuestionSubmitTable(@RequestParam("tableName") String tableName);
+
 }

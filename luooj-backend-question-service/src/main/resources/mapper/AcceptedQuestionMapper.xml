@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.luoying.luoojbackendquestionservice.mapper.AcceptedQuestionMapper">
+
+    <resultMap id="BaseResultMap" type="com.luoying.luoojbackendmodel.entity.AcceptedQuestion">
+        <id property="questionId" column="id" jdbcType="BIGINT"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+        <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <insert id="addAcceptedQuestion">
+        insert into ${tableName} (questionId)
+        values (#{questionId})
+    </insert>
+
+    <select id="queryAcceptedQuestionList" parameterType="string" resultType="com.luoying.luoojbackendmodel.entity.AcceptedQuestion">
+        select * from ${tableName}
+    </select>
+
+    <select id="existAcceptedQuestionTable" parameterType="string" resultType="java.lang.Integer">
+        select count(*)
+        from information_schema.TABLES
+        where table_name = #{tableName}
+    </select>
+
+    <update id="dropAcceptedQuestionTable" parameterType="string">
+        DROP TABLE IF EXISTS ${tableName}
+    </update>
+
+    <update id="createAcceptedQuestionTable" parameterType="string">
+        CREATE TABLE ${tableName}
+        (
+            id         bigint auto_increment comment 'id'
+                primary key,
+            questionId bigint                             not null comment '题目id',
+            createTime datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+            updateTime datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+            isDelete   tinyint  default 0                 not null comment '是否删除',
+            index      idx_questionId (questionId)
+        ) comment '某用户通过的题目' collate = utf8mb4_unicode_ci;
+    </update>
+
+    <sql id="Base_Column_List">
+        id
+        ,title,content,
+        tags,answer,submitNum,
+        acceptedNum,judgeConfig,judgeCase,
+        thumbNum,favourNum,userId,
+        createTime,updateTime,isDelete
+    </sql>
+
+</mapper>

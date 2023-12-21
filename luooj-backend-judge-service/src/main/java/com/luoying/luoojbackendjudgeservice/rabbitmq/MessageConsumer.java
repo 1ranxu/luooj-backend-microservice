@@ -46,7 +46,7 @@ public class MessageConsumer {
         try {
             // 判题
             judgeService.doJudge(questionSubmitId);
-            // 判断是否判题成功且通过
+            // 判断提交状态是否为判题成功
             QuestionSubmit questionSubmit = questionFeignClient.getQuestionSubmitById(questionSubmitId);
             QuestionSubmitVO questionSubmitVO = QuestionSubmitVO.objToVo(questionSubmit);
             if (!QuestionSubmitStatusEnum.SUCCESS.getValue().equals(questionSubmit.getStatus())) {

@@ -9,10 +9,12 @@ import com.luoying.luoojbackendcommon.constant.CommonConstant;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
 import com.luoying.luoojbackendcommon.exception.ThrowUtils;
 import com.luoying.luoojbackendmodel.dto.question.QuestionQueryRequest;
+import com.luoying.luoojbackendmodel.entity.AcceptedQuestion;
 import com.luoying.luoojbackendmodel.entity.Question;
 import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.vo.QuestionVO;
 import com.luoying.luoojbackendmodel.vo.UserVO;
+import com.luoying.luoojbackendquestionservice.mapper.AcceptedQuestionMapper;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionMapper;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendcommon.utils.SqlUtils;
@@ -42,6 +44,9 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
 
     @Resource
     private UserFeighClient userFeighClient;
+
+    @Resource
+    private AcceptedQuestionMapper acceptedQuestionMapper;
 
     /**
      * 校验题目是否合法
@@ -140,13 +145,14 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         if (CollectionUtils.isEmpty(questionList)) {
             return questionVOPage;
         }
-        // 1. 关联查询用户信息
+        // 1. 题目关联查询用户信息
         Set<Long> userIdSet = questionList.stream().map(Question::getUserId).collect(Collectors.toSet());
         Map<Long, List<User>> userIdUserListMap = userFeighClient.listByIds(userIdSet).stream()
                 .collect(Collectors.groupingBy(User::getId));
-        // 填充信息
+        // 2. 填充信息
         List<QuestionVO> questionVOList = questionList.stream().map(question -> {
             QuestionVO questionVO = QuestionVO.objToVo(question);
+            // 填充创建用户信息
             Long userId = question.getUserId();
             User user = null;
             if (userIdUserListMap.containsKey(userId)) {
@@ -155,6 +161,35 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
             questionVO.setUserVO(userFeighClient.getUserVO(user));
             return questionVO;
         }).collect(Collectors.toList());
+
+        // 4. 获取当前登录用户id
+        try {
+            User loginUser = userFeighClient.getLoginUser(request);
+            if (loginUser != null) {
+                Long id = loginUser.getId();
+                // 5. 查询该用户的题目通过表，获取所有通过题目的id集合
+                String tableName = "accepted_question_" + id;
+                List<AcceptedQuestion> acceptedQuestionList = acceptedQuestionMapper.queryAcceptedQuestionList(tableName);
+                Set<Long> acceptedQuestionIdSet = acceptedQuestionList.stream().map(AcceptedQuestion::getQuestionId).collect(Collectors.toSet());
+                questionVOList = questionVOList.stream().map(questionVO -> {
+                    // 填充是否通过信息
+                    if (acceptedQuestionIdSet.contains(questionVO.getId())) {
+                        // 0 代表通过
+                        questionVO.setIsAccepted(0);
+                    } else {
+                        // 1 代表未通过
+                        questionVO.setIsAccepted(1);
+                    }
+                    return questionVO;
+                }).collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            questionVOList = questionVOList.stream().map(questionVO -> {
+                // 1 代表未通过
+                questionVO.setIsAccepted(1);
+                return questionVO;
+            }).collect(Collectors.toList());
+        }
         questionVOPage.setRecords(questionVOList);
         return questionVOPage;
     }

@@ -13,6 +13,7 @@ import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.enums.UserRoleEnum;
 import com.luoying.luoojbackendmodel.vo.LoginUserVO;
 import com.luoying.luoojbackendmodel.vo.UserVO;
+import com.luoying.luoojbackendserviceclient.service.QuestionFeignClient;
 import com.luoying.luoojbackenduserservice.mapper.UserMapper;
 import com.luoying.luoojbackenduserservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +34,6 @@ import static com.luoying.luoojbackendcommon.constant.UserConstant.USER_LOGIN_ST
 
 /**
  * 用户服务实现
- *
  */
 @Service
 @Slf4j
@@ -42,6 +43,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 盐值，混淆密码
      */
     private static final String SALT = "luoying";
+
+    @Resource
+    private QuestionFeignClient questionFeignClient;
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -77,7 +81,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             if (!saveResult) {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
             }
-            return user.getId();
+            long userId = user.getId();
+            // 4. 创建 题目通过表 和 个人提交表
+            String acceptedQuestionTable = "accepted_question_" + userId;
+            String questionSubmitTable = "question_submit_" + userId;
+            // 查询 题目通过表 是否存在
+            if (questionFeignClient.existAcceptedQuestionTable(acceptedQuestionTable)
+                    || questionFeignClient.existQuestionSubmitTable(questionSubmitTable)) {
+                // 删除旧表
+                questionFeignClient.dropAcceptedQuestionTable(acceptedQuestionTable);
+                questionFeignClient.dropQuestionSubmitTable(questionSubmitTable);
+            }
+            // 新建 题目通过表 和 个人提交表
+            questionFeignClient.createAcceptedQuestionTable(acceptedQuestionTable);
+            questionFeignClient.createQuestionSubmitTable(questionSubmitTable);
+            return userId;
         }
     }
 
@@ -117,6 +135,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         loginUserVO.setToken(token);
         return loginUserVO;
     }
+
     /**
      * 获取当前登录用户
      *

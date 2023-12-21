@@ -70,6 +70,11 @@ public class QuestionVO implements Serializable {
     private Long userId;
 
     /**
+     * 是否通过
+     */
+    private Integer isAccepted;
+
+    /**
      * 创建时间
      */
     private Date createTime;
