@@ -5,28 +5,58 @@
 <mapper namespace="com.luoying.luoojbackendquestionservice.mapper.QuestionSubmitMapper">
 
     <resultMap id="BaseResultMap" type="com.luoying.luoojbackendmodel.entity.QuestionSubmit">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="language" column="language" jdbcType="VARCHAR"/>
-            <result property="questionId" column="questionId" jdbcType="BIGINT"/>
-            <result property="userId" column="userId" jdbcType="BIGINT"/>
-            <result property="code" column="code" jdbcType="VARCHAR"/>
-            <result property="judgeInfo" column="judgeInfo" jdbcType="VARCHAR"/>
-            <result property="status" column="status" jdbcType="INTEGER"/>
-            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
-            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
-            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="language" column="language" jdbcType="VARCHAR"/>
+        <result property="questionId" column="questionId" jdbcType="BIGINT"/>
+        <result property="userId" column="userId" jdbcType="BIGINT"/>
+        <result property="code" column="code" jdbcType="VARCHAR"/>
+        <result property="judgeInfo" column="judgeInfo" jdbcType="VARCHAR"/>
+        <result property="status" column="status" jdbcType="INTEGER"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+        <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <insert id="addQuestionSubmit">
-        insert into ${tableName} (language, questionId, userId, code, judgeInfo, status)
-        values (#{questionSubmit.language,jdbcType=VARCHAR}, #{questionSubmit.questionId,jdbcType=BIGINT},
-                #{questionSubmit.userId,jdbcType=BIGINT}, #{questionSubmit.code,jdbcType=VARCHAR},
-                #{questionSubmit.judgeInfo,jdbcType=VARCHAR}, #{questionSubmit.status,jdbcType=INTEGER})
+        insert into ${tableName} (id, language, questionId, userId, code, judgeInfo, status)
+        values (#{questionSubmit.id,jdbcType=BIGINT}, #{questionSubmit.language,jdbcType=VARCHAR},
+                #{questionSubmit.questionId,jdbcType=BIGINT}, #{questionSubmit.userId,jdbcType=BIGINT},
+                #{questionSubmit.code,jdbcType=VARCHAR}, #{questionSubmit.judgeInfo,jdbcType=VARCHAR},
+                #{questionSubmit.status,jdbcType=INTEGER})
     </insert>
 
-    <select id="queryQuestionSubmitList" parameterType="string" resultType="com.luoying.luoojbackendmodel.entity.QuestionSubmit">
-        select * from ${tableName}
+    <select id="queryQuestionSubmitList" parameterType="string"
+            resultType="com.luoying.luoojbackendmodel.entity.QuestionSubmit">
+        select *
+        from ${tableName}
     </select>
+
+    <update id="updateQuestionSubmit">
+        update ${tableName}
+        <set>
+            <if test="questionSubmit.language != null ">
+                language=#{questionSubmit.language,jdbcType=VARCHAR},
+            </if>
+            <if test="questionSubmit.questionId > 0 ">
+                questionId=#{questionSubmit.questionId,jdbcType=BIGINT},
+            </if>
+            <if test="questionSubmit.userId > 0 ">
+                userId=#{questionSubmit.userId,jdbcType=BIGINT},
+            </if>
+            <if test="questionSubmit.code != null ">
+                code=#{questionSubmit.code,jdbcType=VARCHAR},
+            </if>
+            <if test="questionSubmit.judgeInfo != null ">
+                judgeInfo=#{questionSubmit.judgeInfo,jdbcType=VARCHAR},
+            </if>
+            <if test="questionSubmit.status > 0">
+                status=#{questionSubmit.status,jdbcType=INTEGER},
+            </if>
+        </set>
+        <where>
+            id = #{questionSubmit.id,jdbcType=BIGINT}
+        </where>
+    </update>
 
     <select id="existQuestionSubmitTable" parameterType="string" resultType="java.lang.Integer">
         select count(*)
@@ -57,8 +87,10 @@
         ) comment '某用户的提交记录' collate = utf8mb4_unicode_ci
     </update>
 
+
     <sql id="Base_Column_List">
-        id,language,questionId,
+        id
+        ,language,questionId,
         userId,code,judgeInfo,
         status,createTime,updateTime,
         isDelete

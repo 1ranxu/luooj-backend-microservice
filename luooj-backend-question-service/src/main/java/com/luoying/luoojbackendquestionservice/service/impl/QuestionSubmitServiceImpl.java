@@ -57,6 +57,9 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     @Resource
     private MessageProducer messageProducer;
 
+    @Resource
+    private QuestionSubmitMapper questionSubmitMapper;
+
     /**
      * 题目提交
      *
@@ -102,10 +105,14 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         // 设置初始状态
         questionSubmit.setStatus(QuestionSubmitStatusEnum.WAITING.getValue());
         questionSubmit.setJudgeInfo("{}");
+        // 保存到提交记录总表
         boolean result = this.save(questionSubmit);
         if (!result) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "题目提交失败");
         }
+        // 保存到个人提交表
+        String tableName = "question_submit_" + userId;
+        questionSubmitMapper.addQuestionSubmit(tableName,questionSubmit);
         // 发送消息
         messageProducer.sendMessage(EXCHANGE_NAME, ROUTING_KEY, String.valueOf(questionSubmit.getId()));
 

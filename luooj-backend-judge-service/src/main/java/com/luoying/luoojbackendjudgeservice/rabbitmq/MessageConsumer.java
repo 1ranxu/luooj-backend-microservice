@@ -52,12 +52,13 @@ public class MessageConsumer {
             if (!QuestionSubmitStatusEnum.SUCCESS.getValue().equals(questionSubmit.getStatus())) {
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "判题失败");
             }
-            // 设置通过数
+
             // 判断题目是否通过
             if (!JudgeInfoMessagenum.ACCEPTED.getValue().equals(questionSubmitVO.getJudgeInfo().getMessage())) {
                 channel.basicAck(deliveryTag, false);
                 return;
             }
+            // 设置通过数
             Long questionId = questionSubmit.getQuestionId();
             Question question = questionFeignClient.getQuestionById(questionId);
             Integer acceptedNum = question.getAcceptedNum();
@@ -70,6 +71,14 @@ public class MessageConsumer {
                 if (!save) {
                     throw new BusinessException(ErrorCode.OPERATION_ERROR, "保存数据失败");
                 }
+            }
+            // 设置个人题目通过表
+            try {
+                Long userId = questionSubmit.getUserId();
+                String tableName = "accepted_question_" + userId;
+                questionFeignClient.addAcceptedQuestion(tableName, questionId);
+            } catch (Exception e) {
+                log.info("该题目已通过，不用重复添加");
             }
             // 确认消息
             channel.basicAck(deliveryTag, false);

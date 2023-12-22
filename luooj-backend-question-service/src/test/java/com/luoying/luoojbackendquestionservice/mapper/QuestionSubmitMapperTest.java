@@ -50,13 +50,27 @@ class QuestionSubmitMapperTest {
     }
 
     @Test
+    void updateQuestionSubmit() {
+        long userId = 1722494418820870145L;
+        String tableName = "question_submit_" + userId;
+
+        QuestionSubmit questionSubmit = new QuestionSubmit();
+        questionSubmit.setId(1738033777324089346L);
+        questionSubmit.setStatus(2);
+        questionSubmit.setJudgeInfo("{\"message\":\"Accepted\",\"memory\":500,\"time\":86}");
+
+        int resultData = questionSubmitMapper.updateQuestionSubmit(tableName, questionSubmit);
+        log.info("个人提交记录{}", resultData);
+    }
+
+    @Test
     void existAcceptedQuestionTable() {
         long userId = 1722221123978498050L;
         String tableName = "question_submit_" + userId;
-
         int result = questionSubmitMapper.existQuestionSubmitTable(tableName);
         log.info("表是否存在{}", result);
     }
+
     @Test
     void dropAcceptedQuestionTable() {
         long userId = 1722221123978498060L;

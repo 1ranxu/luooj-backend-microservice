@@ -52,7 +52,7 @@ public class FailMessageConsumer {
             channel.basicNack(deliveryTag, false, false);
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "提交的题目信息不存在");
         }
-        // 把提交状态修改为失败
+        // 把题目提交总表中的提交记录的提交状态修改为失败
         questionSubmit.setStatus(QuestionSubmitStatusEnum.FAILURE.getValue());
 
         boolean update = questionFeignClient.updateQuestionSubmitById(questionSubmit);
@@ -60,6 +60,13 @@ public class FailMessageConsumer {
             log.info("处理死信队列消息失败,对应提交的题目id为:{}", questionSubmit.getId());
             channel.basicNack(deliveryTag, false, false);
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "处理死信队列消息失败");
+        }
+        // 把题目提交个人表中的提交记录的提交状态修改为失败
+        long userId = questionSubmit.getUserId();
+        String tableName = "question_submit_" + userId;
+        update = questionFeignClient.updateQuestionSubmit(tableName, questionSubmit);
+        if (!update) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "处理死信队列消息失败");
         }
         // 确认消息
         channel.basicAck(deliveryTag, false);

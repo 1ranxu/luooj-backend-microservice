@@ -56,6 +56,12 @@ public class QuestionInnerController implements QuestionFeignClient {
     }
 
     @Override
+    @PostMapping("/accepted_question/add")
+    public boolean addAcceptedQuestion(String tableName, long questionId) {
+        return acceptedQuestionMapper.addAcceptedQuestion(tableName, questionId) == 1;
+    }
+
+    @Override
     @GetMapping("/accepted_question/exist/table")
     public boolean existAcceptedQuestionTable(String tableName) {
         return acceptedQuestionMapper.existAcceptedQuestionTable(tableName) == 1;
@@ -71,6 +77,12 @@ public class QuestionInnerController implements QuestionFeignClient {
     @GetMapping("/accepted_question/create/table")
     public boolean createAcceptedQuestionTable(String tableName) {
         return acceptedQuestionMapper.createAcceptedQuestionTable(tableName) == 0;
+    }
+
+    @Override
+    @PostMapping("/question_submit/update/personal")
+    public boolean updateQuestionSubmit(String tableName, QuestionSubmit questionSubmit) {
+        return questionSubmitMapper.updateQuestionSubmit(tableName, questionSubmit) == 1;
     }
 
     @Override

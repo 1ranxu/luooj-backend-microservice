@@ -27,6 +27,9 @@ public interface QuestionFeignClient {
     @PostMapping("/update")
     Boolean updateQuestionById(@RequestBody Question question);
 
+    @PostMapping("/accepted_question/add")
+    boolean addAcceptedQuestion(@RequestParam("tableName")String tableName, @RequestParam("questionId")long questionId);
+
     @GetMapping("/accepted_question/exist/table")
     boolean existAcceptedQuestionTable(@RequestParam("tableName") String tableName);
 
@@ -38,6 +41,9 @@ public interface QuestionFeignClient {
     @GetMapping("/accepted_question/create/table")
     boolean createAcceptedQuestionTable(@RequestParam("tableName") String tableName);
 
+
+    @PostMapping("/question_submit/update/personal")
+    boolean updateQuestionSubmit(@RequestParam("tableName") String tableName, @RequestBody QuestionSubmit questionSubmit);
 
     @GetMapping("/question_submit/exist/table")
     boolean existQuestionSubmitTable(@RequestParam("tableName") String tableName);
