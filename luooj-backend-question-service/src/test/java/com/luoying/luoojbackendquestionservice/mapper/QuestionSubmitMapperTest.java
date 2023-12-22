@@ -41,12 +41,14 @@ class QuestionSubmitMapperTest {
     }
 
     @Test
-    void queryAcceptedQuestionList() {
+    void queryQuestionSubmitList() {
         long userId = 1722221123978498050L;
         String tableName = "question_submit_" + userId;
 
-        List<QuestionSubmit> resultData = questionSubmitMapper.queryQuestionSubmitList(tableName);
+        List<QuestionSubmit> resultData = questionSubmitMapper.queryQuestionSubmitList(tableName, 10, 0, null, 1722617540408606721L);
         log.info("个人提交记录{}", resultData);
+        long count = questionSubmitMapper.countQuestionSubmitAll(tableName,1722617540408606721L);
+        log.info("总数{}", count);
     }
 
     @Test

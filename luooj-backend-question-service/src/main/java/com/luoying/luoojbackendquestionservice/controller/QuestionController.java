@@ -24,6 +24,7 @@ import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.enums.QuestionSubmitLanguageEnum;
 import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
 import com.luoying.luoojbackendmodel.vo.QuestionVO;
+import com.luoying.luoojbackendquestionservice.mapper.QuestionSubmitMapper;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
 
@@ -55,6 +56,9 @@ public class QuestionController {
 
     @Resource
     private RRateLimiter rateLimiter;
+
+    @Resource
+    private QuestionSubmitMapper questionSubmitMapper;
 
     private final static Gson GSON = new Gson();
 
@@ -366,6 +370,37 @@ public class QuestionController {
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
         Page<QuestionSubmit> questionPage = questionSubmitService.page(new Page<>(current, size),
                 questionSubmitService.getQueryWrapper(questionSubmitQueryRequest));
+        return ResultUtils.success(questionSubmitService.getQuestionSubmitVOPage(questionPage, loginUser));
+    }
+
+    /**
+     * 分页获取个人题目提交列表
+     *
+     * @param questionSubmitQueryRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/question_submit/my/list/page")
+    public BaseResponse<Page<QuestionSubmitVO>> listMyQuestionSubmitByPage(@RequestBody QuestionSubmitQueryRequest questionSubmitQueryRequest,
+                                                                           HttpServletRequest request) {
+        long current = questionSubmitQueryRequest.getCurrent();
+        long size = questionSubmitQueryRequest.getPageSize();
+        String language = questionSubmitQueryRequest.getLanguage();
+        Long questionId = questionSubmitQueryRequest.getQuestionId();
+        User loginUser = userFeignClient.getLoginUser(request);
+        // 限制爬虫
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        // 查询
+        Long userId = loginUser.getId();
+        String tableName = "question_submit_" + userId;
+        List<QuestionSubmit> questionSubmitList = questionSubmitMapper.queryQuestionSubmitList(tableName, size, (current - 1) * size, language, questionId);
+        long total = questionSubmitMapper.countQuestionSubmitAll(tableName, questionId);
+
+        Page<QuestionSubmit> questionPage = new Page<>();
+        questionPage.setRecords(questionSubmitList);
+        questionPage.setCurrent(current);
+        questionPage.setSize(size);
+        questionPage.setTotal(total);
         return ResultUtils.success(questionSubmitService.getQuestionSubmitVOPage(questionPage, loginUser));
     }
 

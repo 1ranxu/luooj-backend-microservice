@@ -25,10 +25,24 @@
                 #{questionSubmit.status,jdbcType=INTEGER})
     </insert>
 
+    <select id="countQuestionSubmitAll" resultType="java.lang.Long">
+        select count(*) from ${tableName} where questionId = #{questionId}
+    </select>
+
     <select id="queryQuestionSubmitList" parameterType="string"
             resultType="com.luoying.luoojbackendmodel.entity.QuestionSubmit">
         select *
         from ${tableName}
+        <where>
+            <if test="language != null">
+                language = #{language}
+            </if>
+            <if test="questionId != null">
+                and questionId = #{questionId}
+            </if>
+        </where>
+        order by createTime desc
+        LIMIT #{size} OFFSET #{offset}
     </select>
 
     <update id="updateQuestionSubmit">
@@ -63,6 +77,7 @@
         from information_schema.TABLES
         where table_name = #{tableName}
     </select>
+
 
     <update id="dropQuestionSubmitTable" parameterType="string">
         DROP TABLE IF EXISTS ${tableName}

@@ -40,6 +40,11 @@ public class QuestionVO implements Serializable {
     private List<String> tags;
 
     /**
+     * 题目答案
+     */
+    private String answer;
+
+    /**
      * 题目提交数
      */
     private Integer submitNum;
