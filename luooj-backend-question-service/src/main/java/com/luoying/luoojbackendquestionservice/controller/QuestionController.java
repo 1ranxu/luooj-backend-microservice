@@ -15,6 +15,10 @@ import com.luoying.luoojbackendcommon.common.ResultUtils;
 import com.luoying.luoojbackendcommon.constant.UserConstant;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
 import com.luoying.luoojbackendcommon.exception.ThrowUtils;
+import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeRequest;
+import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeResponse;
+import com.luoying.luoojbackendmodel.codesanbox.RunCodeRequest;
+import com.luoying.luoojbackendmodel.codesanbox.RunCodeResponse;
 import com.luoying.luoojbackendmodel.dto.question.*;
 import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitAddRequest;
 import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitQueryRequest;
@@ -27,7 +31,7 @@ import com.luoying.luoojbackendmodel.vo.QuestionVO;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionSubmitMapper;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
-
+import com.luoying.luoojbackendserviceclient.service.JudgeFeignClient;
 import com.luoying.luoojbackendserviceclient.service.UserFeighClient;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RRateLimiter;
@@ -37,7 +41,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 题目接口
@@ -59,6 +65,9 @@ public class QuestionController {
 
     @Resource
     private QuestionSubmitMapper questionSubmitMapper;
+
+    @Resource
+    private JudgeFeignClient judgeFeignClient;
 
     private final static Gson GSON = new Gson();
 
@@ -408,4 +417,25 @@ public class QuestionController {
     public BaseResponse<List<String>> getCodeLanguage() {
         return ResultUtils.success(QuestionSubmitLanguageEnum.getValues());
     }
+
+    @PostMapping("/question/run/online")
+    public BaseResponse<RunCodeResponse> questionRunOnline(@RequestBody RunCodeRequest runCodeRequest) {
+        List<String> inputList = Arrays.asList(runCodeRequest.getInput());
+        ExecuteCodeRequest executeCodeRequest =
+                ExecuteCodeRequest.builder()
+                        .code(runCodeRequest.getCode())
+                        .language(runCodeRequest.getLanguage())
+                        .inputList(inputList)
+                        .build();
+        ExecuteCodeResponse executeCodeResponse = judgeFeignClient.runOnline(executeCodeRequest);
+        List<String> outputList = Optional.ofNullable(executeCodeResponse.getOutputList()).orElse(Arrays.asList(""));
+        RunCodeResponse runCodeResponse = RunCodeResponse.builder()
+                .output(outputList.get(0))
+                .message(executeCodeResponse.getMessage())
+                .status(executeCodeResponse.getStatus())
+                .judgeInfo(executeCodeResponse.getJudgeInfo())
+                .build();
+        return ResultUtils.success(runCodeResponse);
+    }
+
 }
