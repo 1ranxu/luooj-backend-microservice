@@ -125,7 +125,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         // 3. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
-        // 4、将登录信息保持在token中，通过JWT生成token(存入id和账号)
+        // 4、将登录信息保存在token中，通过JWT生成token(存入id和账号)
         Map<String, Object> tokenMap = new HashMap<>();
         tokenMap.put("id", user.getId());
         tokenMap.put("userAccount", user.getUserAccount());
