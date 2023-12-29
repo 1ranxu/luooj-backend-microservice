@@ -4,10 +4,14 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 @Slf4j
+@Component
 public class InitRabbitMq {
     private static final String EXCHANGE_NAME = "oj_exchange";
     private static final String QUEUE_NAME = "oj_queue";
@@ -16,10 +20,14 @@ public class InitRabbitMq {
     private static final String DLX_QUEUE_NAME = "oj_dlx_queue";
     private static final String DLX_ROUTING_KEY = "oj_dlx_routingKey";
 
-    public static void doInit() {
+    @Value("${spring.rabbitmq.host}")
+    private String host;
+
+    @PostConstruct
+    public void doInit() {
         try {
             ConnectionFactory connectionFactory = new ConnectionFactory();
-            connectionFactory.setHost("localhost");
+            connectionFactory.setHost(host);
             Connection connection = connectionFactory.newConnection();
             Channel channel = connection.createChannel();
             // 指定死信参数
@@ -47,9 +55,5 @@ public class InitRabbitMq {
         } catch (Exception e) {
             log.error("消息队列启动失败");
         }
-    }
-
-    public static void main(String[] args) {
-        doInit();
     }
 }
