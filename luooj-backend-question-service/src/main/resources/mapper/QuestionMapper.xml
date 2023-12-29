@@ -21,6 +21,18 @@
         <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
         <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
+    <!--查询上一道题目-->
+    <select id="getPrevQuestion" resultType="long">
+        select id
+        from question
+        order by id >= #{questionId}, id desc limit 1
+    </select>
+    <!--查询下一道题目-->
+    <select id="getNextQuestion" resultType="long">
+        select id
+        from ${tableName}
+        order by id &lt;= #{questionId}, id asc limit 1
+    </select>
 
     <sql id="Base_Column_List">
         id
@@ -30,5 +42,6 @@
         thumbNum,favourNum,userId,
         createTime,updateTime,isDelete
     </sql>
+
 
 </mapper>

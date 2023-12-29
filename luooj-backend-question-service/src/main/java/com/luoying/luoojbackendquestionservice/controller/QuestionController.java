@@ -28,6 +28,7 @@ import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.enums.QuestionSubmitLanguageEnum;
 import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
 import com.luoying.luoojbackendmodel.vo.QuestionVO;
+import com.luoying.luoojbackendquestionservice.mapper.QuestionMapper;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionSubmitMapper;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
@@ -40,10 +41,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * 题目接口
@@ -65,6 +63,9 @@ public class QuestionController {
 
     @Resource
     private QuestionSubmitMapper questionSubmitMapper;
+
+    @Resource
+    private QuestionMapper questionMapper;
 
     @Resource
     private JudgeFeignClient judgeFeignClient;
@@ -418,7 +419,7 @@ public class QuestionController {
         return ResultUtils.success(QuestionSubmitLanguageEnum.getValues());
     }
 
-    @PostMapping("/question/run/online")
+    @PostMapping("/run/online")
     public BaseResponse<RunCodeResponse> questionRunOnline(@RequestBody RunCodeRequest runCodeRequest) {
         List<String> inputList = Arrays.asList(runCodeRequest.getInput());
         ExecuteCodeRequest executeCodeRequest =
@@ -437,5 +438,27 @@ public class QuestionController {
                 .build();
         return ResultUtils.success(runCodeResponse);
     }
+
+    @GetMapping("/get/questionId/previous")
+    public BaseResponse<Long> getPrevQuestion(@RequestParam("questionId") long questionId) {
+        String tableName = "question";
+        return ResultUtils.success(questionMapper.getPrevQuestion(tableName, questionId));
+    }
+
+    @GetMapping("/get/questionId/next")
+    public BaseResponse<Long> getNextQuestion(@RequestParam("questionId") long questionId) {
+        String tableName = "question";
+        return ResultUtils.success(questionMapper.getNextQuestion(tableName, questionId));
+    }
+
+    @GetMapping("/get/questionId/random")
+    public BaseResponse<Long> getRandomQuestion() {
+        List<Question> questionList = questionMapper.selectList(null);
+        Random random = new Random();
+        int index = random.nextInt(questionList.size());
+        Question question = questionList.get(index);
+        return ResultUtils.success(question.getId());
+    }
+
 
 }

@@ -2,6 +2,7 @@ package com.luoying.luoojbackendquestionservice.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.luoying.luoojbackendmodel.entity.Question;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -11,6 +12,21 @@ import com.luoying.luoojbackendmodel.entity.Question;
  * @Entity com.luoying.model.entity.Question
  */
 public interface QuestionMapper extends BaseMapper<Question> {
+    /**
+     * 查询上一道题目
+     * @param tableName
+     * @param questionId
+     * @return
+     */
+    long getPrevQuestion(@Param("tableName") String tableName, @Param("questionId") long questionId);
+
+    /**
+     * 查询下一道题目
+     * @param tableName
+     * @param questionId
+     * @return
+     */
+    long getNextQuestion(@Param("tableName") String tableName, @Param("questionId") long questionId);
 
 }
 
