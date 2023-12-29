@@ -6,15 +6,22 @@ import org.redisson.api.RateIntervalUnit;
 import org.redisson.api.RateType;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RedissonClientConfig {
+    @Value("${spring.redis.host}")
+    private String host;
+
+    @Value("${spring.redis.password}")
+    private String password;
+
     @Bean
     public RRateLimiter rateLimiter() {
         Config config = new Config();
-        config.useSingleServer().setAddress("redis://127.0.0.1:6379").setDatabase(1).setPassword("123");
+        config.useSingleServer().setAddress("redis://"+host+":6379").setDatabase(1).setPassword(password);
         RedissonClient redissonClient = Redisson.create(config);
 
         String key = "myRateLimiter";
