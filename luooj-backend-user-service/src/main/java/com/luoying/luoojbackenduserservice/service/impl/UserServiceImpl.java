@@ -8,7 +8,9 @@ import com.luoying.luoojbackendcommon.constant.CommonConstant;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
 import com.luoying.luoojbackendcommon.utils.JwtUtils;
 import com.luoying.luoojbackendcommon.utils.SqlUtils;
+import com.luoying.luoojbackendmodel.dto.user.UserLoginRequest;
 import com.luoying.luoojbackendmodel.dto.user.UserQueryRequest;
+import com.luoying.luoojbackendmodel.dto.user.UserRegisterRequest;
 import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.enums.UserRoleEnum;
 import com.luoying.luoojbackendmodel.vo.LoginUserVO;
@@ -30,38 +32,49 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.luoying.luoojbackendcommon.constant.UserConstant.SALT;
 import static com.luoying.luoojbackendcommon.constant.UserConstant.USER_LOGIN_STATE;
 
 /**
+ * @author 落樱的悔恨
  * 用户服务实现
  */
 @Service
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
-    /**
-     * 盐值，混淆密码
-     */
-    private static final String SALT = "luoying";
+
 
     @Resource
     private QuestionFeignClient questionFeignClient;
 
+    /**
+     * 注册
+     * @param userRegisterRequest 用户注册请求
+     */
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword) {
+    public long userRegister(UserRegisterRequest userRegisterRequest) {
+        String userAccount = userRegisterRequest.getUserAccount();
+        String userPassword = userRegisterRequest.getUserPassword();
+        String checkPassword = userRegisterRequest.getCheckPassword();
         // 1. 校验
         if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
-        if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
+        if (userAccount.length() < 4 || userAccount.length() > 15) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号长度介于4~15位");
         }
-        if (userPassword.length() < 8 || checkPassword.length() < 8) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
+        if (userPassword.length() < 8 || checkPassword.length() < 8 || userPassword.length() > 16 || checkPassword.length() > 16) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码长度介于8~16位");
         }
         // 密码和校验密码相同
         if (!userPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
+        }
+        // 昵称、账号、密码只能由英文字母大小写、数字组成
+        String regex = "^[a-zA-Z0-9]+$";
+        if (!userAccount.matches(regex) || !userPassword.matches(regex) || !checkPassword.matches(regex)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "昵称、账号、密码只能由英文字母大小写、数字组成");
         }
         synchronized (userAccount.intern()) {
             // 账户不能重复
@@ -82,7 +95,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
             }
             long userId = user.getId();
-            // 4. 创建 题目通过表 和 个人提交表
+            // 4. 创建 个人通过题目表 和 个人提交表
             String acceptedQuestionTable = "accepted_question_" + userId;
             String questionSubmitTable = "question_submit_" + userId;
             // 查询 题目通过表 是否存在
@@ -99,17 +112,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
     }
 
+    /**
+     * 登录
+     * @param userLoginRequest 用户登录请求
+     * @param request          {@link HttpServletRequest}
+     */
     @Override
-    public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
+    public LoginUserVO userLogin(UserLoginRequest userLoginRequest, HttpServletRequest request) {
+        String userAccount = userLoginRequest.getUserAccount();
+        String userPassword = userLoginRequest.getUserPassword();
         // 1. 校验
         if (StringUtils.isAnyBlank(userAccount, userPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
-        if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号错误");
+        if (userAccount.length() < 4 || userAccount.length() > 15) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号长度介于4~15位");
         }
-        if (userPassword.length() < 8) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码错误");
+        if (userPassword.length() < 8 || userPassword.length() > 16) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码长度介于8~16位");
+        }
+        // 账号、密码只能由英文字母大小写、数字组成
+        String regex = "^[a-zA-Z0-9]+$";
+        if (!userAccount.matches(regex) || !userPassword.matches(regex)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号、密码只能由英文字母大小写、数字组成");
         }
         // 2. 加密
         String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
@@ -137,10 +162,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
+     * 用户登出
+     *
+     * @param request {@link HttpServletRequest}
+     */
+    @Override
+    public boolean userLogout(HttpServletRequest request) {
+        if (request.getSession().getAttribute(USER_LOGIN_STATE) == null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
+        }
+        // 移除登录态
+        request.getSession().removeAttribute(USER_LOGIN_STATE);
+        return true;
+    }
+
+    /**
      * 获取当前登录用户
      *
-     * @param request
-     * @return
+     * @param request {@link HttpServletRequest}
      */
     @Override
     public User getLoginUser(HttpServletRequest request) {
@@ -153,6 +192,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 从数据库查询（追求性能的话可以注释，直接走缓存）
         long userId = currentUser.getId();
         currentUser = this.getById(userId);
+        // 登录用户不存在
         if (currentUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
@@ -160,58 +200,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
-     * 获取当前登录用户（允许未登录）
-     *
-     * @param request
-     * @return
+     * 获取脱敏的已登录用户信息
+     * @param user 用户信息
+     * @return 脱敏的用户信息
      */
-    @Override
-    public User getLoginUserPermitNull(HttpServletRequest request) {
-        // 先判断是否已登录
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
-        User currentUser = (User) userObj;
-        if (currentUser == null || currentUser.getId() == null) {
-            return null;
-        }
-        // 从数据库查询（追求性能的话可以注释，直接走缓存）
-        long userId = currentUser.getId();
-        return this.getById(userId);
-    }
-
-    /**
-     * 是否为管理员
-     *
-     * @param request
-     * @return
-     */
-    @Override
-    public boolean isAdmin(HttpServletRequest request) {
-        // 仅管理员可查询
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
-        User user = (User) userObj;
-        return isAdmin(user);
-    }
-
-    @Override
-    public boolean isAdmin(User user) {
-        return user != null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
-    }
-
-    /**
-     * 用户注销
-     *
-     * @param request
-     */
-    @Override
-    public boolean userLogout(HttpServletRequest request) {
-        if (request.getSession().getAttribute(USER_LOGIN_STATE) == null) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
-        }
-        // 移除登录态
-        request.getSession().removeAttribute(USER_LOGIN_STATE);
-        return true;
-    }
-
     @Override
     public LoginUserVO getLoginUserVO(User user) {
         if (user == null) {
@@ -222,6 +214,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return loginUserVO;
     }
 
+    /**
+     * 获取脱敏的用户信息
+     *
+     * @param user 用户信息（未脱敏）
+     * @return 用户信息（脱敏）
+     */
     @Override
     public UserVO getUserVO(User user) {
         if (user == null) {
@@ -232,14 +230,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userVO;
     }
 
-    @Override
-    public List<UserVO> getUserVO(List<User> userList) {
-        if (CollectionUtils.isEmpty(userList)) {
-            return new ArrayList<>();
-        }
-        return userList.stream().map(this::getUserVO).collect(Collectors.toList());
-    }
-
+    /**
+     *
+     * @param userQueryRequest 用户查询请求
+     * @return
+     */
     @Override
     public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
         if (userQueryRequest == null) {
@@ -264,4 +259,43 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 sortField);
         return queryWrapper;
     }
+
+
+    /**
+     *
+     * @param userList 用户集合
+     */
+    @Override
+    public List<UserVO> getUserVO(List<User> userList) {
+        if (CollectionUtils.isEmpty(userList)) {
+            return new ArrayList<>();
+        }
+        return userList.stream().map(this::getUserVO).collect(Collectors.toList());
+    }
+
+    /**
+     *
+     * @param request {@link HttpServletRequest}
+     */
+    @Override
+    public boolean isAdmin(HttpServletRequest request) {
+        // 仅管理员可查询
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        User user = (User) userObj;
+        return isAdmin(user);
+    }
+
+    /**
+     *
+     * @param user 用户信息
+     */
+    @Override
+    public boolean isAdmin(User user) {
+        return user != null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
+    }
+
+
+
+
+
 }

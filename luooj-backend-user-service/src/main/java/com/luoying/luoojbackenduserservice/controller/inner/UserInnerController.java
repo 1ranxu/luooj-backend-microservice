@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ * @author 落樱的悔恨
  * 该服务仅内部调用，不是给前端的
  */
 @RestController
@@ -21,11 +22,12 @@ public class UserInnerController implements UserFeighClient {
 
     @Resource
     private UserService userService;
+
     /**
      * 根据id获取用户
      *
-     * @param userId
-     * @return
+     * @param userId 用户id
+     * @return {@link User}
      */
     @Override
     @GetMapping("/get/id")
@@ -34,10 +36,10 @@ public class UserInnerController implements UserFeighClient {
     }
 
     /**
-     * 根据id列表获取用户列表
+     * 根据用户id集合获取用户列表
      *
-     * @param ids
-     * @return
+     * @param ids 用户id集合
+     * @return {@link List<User>}
      */
     @Override
     @GetMapping("/get/ids")

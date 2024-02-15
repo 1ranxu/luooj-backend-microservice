@@ -28,5 +28,10 @@ public interface UserConstant {
      */
     String BAN_ROLE = "ban";
 
+    /**
+     * 盐值，混淆密码
+     */
+    String SALT = "luoying";
+
     // endregion
 }

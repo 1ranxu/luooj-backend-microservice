@@ -5,8 +5,8 @@ import com.luoying.luoojbackendmodel.entity.User;
 
 
 /**
+ * @author 落樱的悔恨
  * 用户数据库操作
- *
  */
 public interface UserMapper extends BaseMapper<User> {
 

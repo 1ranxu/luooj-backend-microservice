@@ -5,8 +5,8 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 用户更新个人信息请求
- *
+ * @author 落樱的悔恨
+ * 用户个人信息更新请求
  */
 @Data
 public class UserUpdateMyRequest implements Serializable {
@@ -15,6 +15,11 @@ public class UserUpdateMyRequest implements Serializable {
      * 用户昵称
      */
     private String userName;
+
+    /**
+     * 用户密码
+     */
+    private String userPassword;
 
     /**
      * 用户头像
