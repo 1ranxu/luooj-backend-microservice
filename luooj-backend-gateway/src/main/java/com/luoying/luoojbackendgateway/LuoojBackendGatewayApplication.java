@@ -5,6 +5,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
+/**
+ * @author 落樱的悔恨
+ */
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 @EnableDiscoveryClient
 public class LuoojBackendGatewayApplication {

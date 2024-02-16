@@ -9,7 +9,10 @@ import org.springframework.web.util.pattern.PathPatternParser;
 
 import java.util.Arrays;
 
-// 处理跨域
+/**
+ * @author 落樱的悔恨
+ * 处理跨域
+ */
 @Configuration
 public class CorsConfig {
     // 自定义跨域拦截器

@@ -14,6 +14,11 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+
+/**
+ * @author 落樱的悔恨
+ * 主用于鉴别请求访问的是不是内部服务，是则拒绝
+ */
 @Component
 public class GlobalAuthFilter implements GlobalFilter , Ordered {
     private AntPathMatcher antPathMatcher = new AntPathMatcher();

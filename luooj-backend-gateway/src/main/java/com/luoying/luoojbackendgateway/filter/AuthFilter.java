@@ -22,11 +22,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * JWT统一鉴权 全局过滤器
- *
  * @author 落樱的悔恨
+ * JWT统一鉴权 全局过滤器
+ * 不使用则可以注释掉@Component注解
  */
-// 不使用则可以注释掉@Component注解
 @Component
 @Slf4j
 public class AuthFilter implements GlobalFilter, Ordered {
@@ -42,9 +41,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
     /**
      * 过滤器核心代码
      *
-     * @param exchange
-     * @param chain
-     * @return
+     * @param exchange {@link ServerWebExchange}
+     * @param chain    {@link GatewayFilterChain}
      */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -83,9 +81,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
     /**
      * 响应错误数据 这个方法就是将这个map转化为JSON
      *
-     * @param response
-     * @param responseData
-     * @return
+     * @param response     {@link ServerHttpResponse}
+     * @param responseData {@link Map<String, Object>}
      */
     private Mono<Void> responseError(ServerHttpResponse response, Map<String, Object> responseData) {
         // 将信息转换为 JSON
@@ -105,8 +102,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
     /**
      * 配置执行顺序
-     *
-     * @return
      */
     @Override
     public int getOrder() {
