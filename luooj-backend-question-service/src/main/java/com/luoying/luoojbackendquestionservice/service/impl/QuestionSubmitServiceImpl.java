@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
  * @createDate 2023-11-09 16:32:34
  */
 @Service
+@Transactional
 public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper, QuestionSubmit>
         implements QuestionSubmitService {
     private static final String EXCHANGE_NAME = "oj_exchange";

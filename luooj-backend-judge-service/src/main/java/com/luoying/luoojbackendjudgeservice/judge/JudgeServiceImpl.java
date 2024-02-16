@@ -21,6 +21,7 @@ import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
 import com.luoying.luoojbackendserviceclient.service.QuestionFeignClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
  * 判题服务实现
  */
 @Service
+@Transactional
 public class JudgeServiceImpl implements JudgeService {
     @Resource
     private QuestionFeignClient questionFeignClient;
