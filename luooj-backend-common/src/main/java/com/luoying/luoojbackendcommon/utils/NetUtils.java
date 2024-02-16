@@ -4,16 +4,15 @@ import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 
 /**
+ * @author 落樱的悔恨
  * 网络工具类
- *
  */
 public class NetUtils {
 
     /**
      * 获取客户端 IP 地址
      *
-     * @param request
-     * @return
+     * @param request {@link HttpServletRequest}
      */
     public static String getIpAddress(HttpServletRequest request) {
         String ip = request.getHeader("x-forwarded-for");

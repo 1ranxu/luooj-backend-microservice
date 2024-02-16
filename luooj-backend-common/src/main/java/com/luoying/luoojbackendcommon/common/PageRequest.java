@@ -4,8 +4,8 @@ import com.luoying.luoojbackendcommon.constant.CommonConstant;
 import lombok.Data;
 
 /**
+ * @author 落樱的悔恨
  * 分页请求
- *
  */
 @Data
 public class PageRequest {

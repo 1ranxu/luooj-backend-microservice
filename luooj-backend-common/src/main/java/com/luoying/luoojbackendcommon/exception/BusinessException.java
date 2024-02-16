@@ -3,8 +3,8 @@ package com.luoying.luoojbackendcommon.exception;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 
 /**
+ * @author 落樱的悔恨
  * 自定义异常类
- *
  */
 public class BusinessException extends RuntimeException {
 

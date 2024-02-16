@@ -1,8 +1,8 @@
 package com.luoying.luoojbackendcommon.constant;
 
 /**
+ * @author 落樱的悔恨
  * 用户常量
- *
  */
 public interface UserConstant {
 

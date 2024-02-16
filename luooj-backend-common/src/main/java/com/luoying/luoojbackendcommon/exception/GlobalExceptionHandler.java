@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
+ * @author 落樱的悔恨
  * 全局异常处理器
- *
  */
 @RestControllerAdvice
 @Slf4j
@@ -24,6 +24,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public BaseResponse<?> runtimeExceptionHandler(RuntimeException e) {
         log.error("RuntimeException", e);
+        return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "系统错误");
+    }
+
+    @ExceptionHandler(Throwable.class)
+    public BaseResponse<?> throwableHandler(Throwable e) {
+        log.error("Throwable", e);
         return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "系统错误");
     }
 }

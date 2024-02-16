@@ -1,8 +1,8 @@
 package com.luoying.luoojbackendcommon.common;
 
 /**
+ * @author 落樱的悔恨
  * 自定义错误码
- *
  */
 public enum ErrorCode {
 

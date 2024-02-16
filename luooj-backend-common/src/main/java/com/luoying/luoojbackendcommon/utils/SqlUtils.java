@@ -3,16 +3,15 @@ package com.luoying.luoojbackendcommon.utils;
 import org.apache.commons.lang3.StringUtils;
 
 /**
+ * @author 落樱的悔恨
  * SQL 工具
- *
  */
 public class SqlUtils {
 
     /**
      * 校验排序字段是否合法（防止 SQL 注入）
      *
-     * @param sortField
-     * @return
+     * @param sortField 排序字段
      */
     public static boolean validSortField(String sortField) {
         if (StringUtils.isBlank(sortField)) {

@@ -9,9 +9,8 @@ import java.util.Date;
 import java.util.Map;
 
 /**
+ * @author 落樱的悔恨
  * JWT 工具类
- *
- * @author Shier
  */
 public class JwtUtils {
 
@@ -29,8 +28,7 @@ public class JwtUtils {
     /**
      * 生成Token
      *
-     * @param params
-     * @return
+     * @param params 需要存储在token中的信息
      */
     public static String getToken(Map params) {
         long currentTime = System.currentTimeMillis();
