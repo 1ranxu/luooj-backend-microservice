@@ -39,9 +39,6 @@ import java.util.stream.Collectors;
 @Service
 public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         implements QuestionService {
-
-    private final static Gson GSON = new Gson();
-
     @Resource
     private UserFeighClient userFeighClient;
 
@@ -49,16 +46,17 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     private AcceptedQuestionMapper acceptedQuestionMapper;
 
     /**
-     * 校验题目是否合法
-     *
-     * @param question
-     * @param add
+     * 校验参数
+     * @param question 题目
+     * @param add 是否为新增
      */
     @Override
     public void validQuestion(Question question, boolean add) {
+        // 判空
         if (question == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        // 获取参数
         String title = question.getTitle();
         String content = question.getContent();
         String tags = question.getTags();
@@ -88,17 +86,18 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     }
 
     /**
-     * 获取查询包装类
+     * 获取查询条件
      *
-     * @param questionQueryRequest
-     * @return
+     * @param questionQueryRequest 题目查询请求
      */
     @Override
     public QueryWrapper<Question> getQueryWrapper(QuestionQueryRequest questionQueryRequest) {
         QueryWrapper<Question> queryWrapper = new QueryWrapper<>();
+        // 判空
         if (questionQueryRequest == null) {
             return queryWrapper;
         }
+        // 获取参数
         Long id = questionQueryRequest.getId();
         String title = questionQueryRequest.getTitle();
         String content = questionQueryRequest.getContent();
@@ -118,30 +117,44 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         }
         queryWrapper.eq(ObjectUtils.isNotEmpty(id), "id", id);
         queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
-        queryWrapper.eq("isDelete", false);
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
+        // 返回
         return queryWrapper;
     }
 
+    /**
+     * 获取封装后的题目
+     * @param question 题目
+     * @param request {@link HttpServletRequest}
+     */
     @Override
     public QuestionVO getQuestionVO(Question question, HttpServletRequest request) {
         QuestionVO questionVO = QuestionVO.objToVo(question);
-        // 1. 关联查询用户信息
+        // 1. 关联查询创建人信息
         Long userId = question.getUserId();
         User user = null;
         if (userId != null && userId > 0) {
             user = userFeighClient.getById(userId);
         }
         UserVO userVO = userFeighClient.getUserVO(user);
+        // 设置创建人消息
         questionVO.setUserVO(userVO);
+        // 返回
         return questionVO;
     }
 
+    /**
+     * 分页获取封装后的题目
+     * @param questionPage {@link Page<Question>}
+     * @param request {@link HttpServletRequest}
+     */
     @Override
     public Page<QuestionVO> getQuestionVOPage(Page<Question> questionPage, HttpServletRequest request) {
+        // 获取题目集合
         List<Question> questionList = questionPage.getRecords();
         Page<QuestionVO> questionVOPage = new Page<>(questionPage.getCurrent(), questionPage.getSize(), questionPage.getTotal());
+        // 判空
         if (CollectionUtils.isEmpty(questionList)) {
             return questionVOPage;
         }

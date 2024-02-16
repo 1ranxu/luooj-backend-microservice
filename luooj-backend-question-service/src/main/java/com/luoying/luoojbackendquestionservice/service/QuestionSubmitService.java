@@ -17,10 +17,10 @@ import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
 */
 public interface QuestionSubmitService extends IService<QuestionSubmit> {
     /**
-     * 提交
+     * 提交题目
      *
-     * @param questionSubmitAddRequest
-     * @param loginUser
+     * @param questionSubmitAddRequest 题目提交创建请求
+     * @param loginUser 登录用户
      * @return 提交记录id
      */
     long doQuestionSubmit(QuestionSubmitAddRequest questionSubmitAddRequest, User loginUser);
@@ -28,27 +28,24 @@ public interface QuestionSubmitService extends IService<QuestionSubmit> {
     /**
      * 获取查询条件
      *
-     * @param questionSubmitQueryRequest
-     * @return
+     * @param questionSubmitQueryRequest 题目提交查询请求
      */
     QueryWrapper<QuestionSubmit> getQueryWrapper(QuestionSubmitQueryRequest questionSubmitQueryRequest);
 
 
     /**
-     * 获取题目提交封装
+     * 获取封装后的题目提交
      *
-     * @param questionSubmit
-     * @param loginUser
-     * @return
+     * @param questionSubmit 题目提交
+     * @param loginUser 登录用户
      */
     QuestionSubmitVO getQuestionSubmitVO(QuestionSubmit questionSubmit, User loginUser);
 
     /**
-     * 分页获取题目提交封装
+     * 分页获取封装后的题目提交
      *
-     * @param questionSubmitPage
-     * @param loginUser
-     * @return
+     * @param questionSubmitPage {@link Page<QuestionSubmit>}
+     * @param loginUser 登录用户
      */
     Page<QuestionSubmitVO> getQuestionSubmitVOPage(Page<QuestionSubmit> questionSubmitPage, User loginUser);
 

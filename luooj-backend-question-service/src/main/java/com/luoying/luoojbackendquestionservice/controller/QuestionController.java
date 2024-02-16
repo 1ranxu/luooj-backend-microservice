@@ -44,6 +44,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
+ * @author 落樱的悔恨
  * 题目接口
  */
 @RestController
@@ -79,201 +80,226 @@ public class QuestionController {
     // region 增删改查
 
     /**
-     * 创建
+     * 创建题目（仅管理员）
      *
-     * @param questionAddRequest
-     * @param request
-     * @return
+     * @param questionAddRequest 创建题目请求
+     * @param request            {@link HttpServletRequest}
      */
     @PostMapping("/add")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Long> addQuestion(@RequestBody QuestionAddRequest questionAddRequest, HttpServletRequest request) {
+        // 判空
         if (questionAddRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        // 拷贝
         Question question = new Question();
         BeanUtils.copyProperties(questionAddRequest, question);
+        // 获取题目标签
         List<String> tags = questionAddRequest.getTags();
         if (tags != null) {
+            // 转Json字符串
             question.setTags(GSON.toJson(tags));
         }
+        // 获取判题用例
         List<QuestionJudgeCase> judgeCaseList = questionAddRequest.getJudgeCaseList();
         if (judgeCaseList != null) {
+            // 转Json字符串
             question.setJudgeCase(GSON.toJson(judgeCaseList));
         }
+        // 获取判题配置
         QuestionJudgeCconfig judgeConfig = questionAddRequest.getJudgeConfig();
         if (judgeConfig != null) {
+            // 转Json字符串
             question.setJudgeConfig(GSON.toJson(judgeConfig));
         }
+        // 校验参数
         questionService.validQuestion(question, true);
+        // 获取登录用户
         User loginUser = userFeignClient.getLoginUser(request);
+        // 设置参数
         question.setUserId(loginUser.getId());
         question.setFavourNum(0);
         question.setThumbNum(0);
+        // 保存
         boolean result = questionService.save(question);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         long newQuestionId = question.getId();
+        // 返回
         return ResultUtils.success(newQuestionId);
     }
 
     /**
-     * 删除
+     * 删除题目（仅管理员）
      *
-     * @param deleteRequest
-     * @param request
-     * @return
+     * @param deleteRequest 删除请求
+     * @param request       {@link HttpServletRequest}
      */
     @PostMapping("/delete")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> deleteQuestion(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
+        // 校验
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        User user = userFeignClient.getLoginUser(request);
+        // 判断题目是否存在
         long id = deleteRequest.getId();
-        // 判断是否存在
         Question oldQuestion = questionService.getById(id);
         ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
-        // 仅本人或管理员可删除
-        if (!oldQuestion.getUserId().equals(user.getId()) && !userFeignClient.isAdmin(user)) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        }
+        // 删除
         boolean b = questionService.removeById(id);
         return ResultUtils.success(b);
     }
 
     /**
-     * 更新（仅管理员）
+     * 更新题目（仅管理员）
      *
-     * @param questionUpdateRequest
-     * @return
+     * @param questionUpdateRequest 题目更新请求
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> updateQuestion(@RequestBody QuestionUpdateRequest questionUpdateRequest) {
+        // 校验
         if (questionUpdateRequest == null || questionUpdateRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        // 拷贝
         Question question = new Question();
         BeanUtils.copyProperties(questionUpdateRequest, question);
+        // 获取题目标签
         List<String> tags = questionUpdateRequest.getTags();
         if (tags != null) {
+            // 转Json字符串
             question.setTags(GSON.toJson(tags));
         }
+        // 获取判题用例
         List<QuestionJudgeCase> judgeCaseList = questionUpdateRequest.getJudgeCaseList();
         if (judgeCaseList != null) {
+            // 转Json字符串
             question.setJudgeCase(GSON.toJson(judgeCaseList));
         }
+        // 获取判题配置
         QuestionJudgeCconfig judgeConfig = questionUpdateRequest.getJudgeConfig();
         if (judgeConfig != null) {
+            // 转Json字符串
             question.setJudgeConfig(GSON.toJson(judgeConfig));
         }
         // 参数校验
         questionService.validQuestion(question, false);
+        // 判断题目是否存在
         long id = questionUpdateRequest.getId();
-        // 判断是否存在
         Question oldQuestion = questionService.getById(id);
         ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
+        // 更新
         boolean result = questionService.updateById(question);
         return ResultUtils.success(result);
     }
 
     /**
-     * 根据 id 获取
+     * 根据 id 获取题目（仅管理员）
      *
-     * @param id
-     * @return
+     * @param id 题目id
      */
     @GetMapping("/get")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Question> getQuestionById(long id, HttpServletRequest request) {
+        // 校验
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        // 查询
         Question question = questionService.getById(id);
         if (question == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
-        User loginUser = userFeignClient.getLoginUser(request);
-        if (!loginUser.getId().equals(question.getUserId()) && !userFeignClient.isAdmin(loginUser)) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        }
+        // 返回
         return ResultUtils.success(question);
     }
 
     /**
-     * 根据 id 获取封装
+     * 根据 id 获取封装后的题目
      *
-     * @param id
-     * @return
+     * @param id 题目id
      */
     @GetMapping("/get/vo")
     public BaseResponse<QuestionVO> getQuestionVOById(long id, HttpServletRequest request) {
+        // 校验
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        // 查询
         Question question = questionService.getById(id);
         if (question == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
+        // 封装返回
         return ResultUtils.success(questionService.getQuestionVO(question, request));
     }
 
     /**
-     * 分页获取列表
+     * 分页获取题目列表（仅管理员）
      *
-     * @param questionQueryRequest
-     * @param request
-     * @return
+     * @param questionQueryRequest 题目查询请求
+     * @param request              {@link HttpServletRequest}
      */
     @PostMapping("/list/page")
-    @AuthCheck(mustRole = "admin")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<Question>> listQuestionByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
                                                            HttpServletRequest request) {
+        // 获取分页参数
         long current = questionQueryRequest.getCurrent();
         long size = questionQueryRequest.getPageSize();
-        // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        // 查询
         Page<Question> questionPage = questionService.page(new Page<>(current, size),
                 questionService.getQueryWrapper(questionQueryRequest));
+        // 返回
         return ResultUtils.success(questionPage);
     }
 
     /**
-     * 分页获取列表（封装类）
+     * 分页获取题目列表（封装类）
      *
-     * @param questionQueryRequest
-     * @param request
-     * @return
+     * @param questionQueryRequest 题目查询请求
+     * @param request              {@link HttpServletRequest}
      */
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<QuestionVO>> listQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
                                                                HttpServletRequest request) {
+        // 获取分页参数
         long current = questionQueryRequest.getCurrent();
         long size = questionQueryRequest.getPageSize();
         // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
+        // 查询
         Page<Question> questionPage = questionService.page(new Page<>(current, size),
                 questionService.getQueryWrapper(questionQueryRequest));
+        // 返回
         return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
     }
 
     /**
-     * 分页获取当前用户创建的资源列表
+     * 分页获取当前用户创建的题目列表
      *
-     * @param questionQueryRequest
-     * @param request
-     * @return
+     * @param questionQueryRequest 题目查询请求
+     * @param request              {@link HttpServletRequest}
      */
     @PostMapping("/my/list/page/vo")
     public BaseResponse<Page<QuestionVO>> listMyQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
                                                                  HttpServletRequest request) {
+        // 判空
         if (questionQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        // 获取当前登录用户
         User loginUser = userFeignClient.getLoginUser(request);
+        // 设置参数
         questionQueryRequest.setUserId(loginUser.getId());
+        // 获取分页参数
         long current = questionQueryRequest.getCurrent();
         long size = questionQueryRequest.getPageSize();
         // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
+        // 查询
         Page<Question> questionPage = questionService.page(new Page<>(current, size),
                 questionService.getQueryWrapper(questionQueryRequest));
         return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
@@ -282,42 +308,46 @@ public class QuestionController {
     // endregion
 
     /**
-     * 编辑（用户）
+     * 更新题目（仅管理员）
      *
-     * @param questionEditRequest
-     * @param request
-     * @return
+     * @param questionEditRequest 题目更新请求
+     * @param request             {@link HttpServletRequest}
      */
     @PostMapping("/edit")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> editQuestion(@RequestBody QuestionEditRequest questionEditRequest, HttpServletRequest request) {
+        // 判空
         if (questionEditRequest == null || questionEditRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        // 拷贝
         Question question = new Question();
         BeanUtils.copyProperties(questionEditRequest, question);
+        // 获取题目标签
         List<String> tags = questionEditRequest.getTags();
         if (tags != null) {
+            // 转Json字符串
             question.setTags(GSON.toJson(tags));
         }
+        // 获取判题用例
         List<QuestionJudgeCase> judgeCaseList = questionEditRequest.getJudgeCaseList();
         if (judgeCaseList != null) {
+            // 转Json字符串
             question.setJudgeCase(GSON.toJson(judgeCaseList));
         }
+        // 获取判题配置
         QuestionJudgeCconfig judgeConfig = questionEditRequest.getJudgeConfig();
         if (judgeConfig != null) {
+            // 转Json字符串
             question.setJudgeConfig(GSON.toJson(judgeConfig));
         }
         // 参数校验
         questionService.validQuestion(question, false);
-        User loginUser = userFeignClient.getLoginUser(request);
+        // 判断题目是否存在
         long id = questionEditRequest.getId();
-        // 判断是否存在
         Question oldQuestion = questionService.getById(id);
         ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
-        // 仅本人或管理员可编辑
-        if (!oldQuestion.getUserId().equals(loginUser.getId()) && !userFeignClient.isAdmin(loginUser)) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        }
+        // 更新
         boolean result = questionService.updateById(question);
         return ResultUtils.success(result);
     }
@@ -326,8 +356,8 @@ public class QuestionController {
     /**
      * 提交题目
      *
-     * @param questionSubmitAddRequest
-     * @param request
+     * @param questionSubmitAddRequest 提交题目请求
+     * @param request                  {@link HttpServletRequest}
      */
     @PostMapping("/question_submit")
     @SentinelResource(value = "doQuestionSubmit", blockHandler = "handleException")
@@ -336,21 +366,31 @@ public class QuestionController {
         /*if (!rateLimiter.tryAcquire()){
             throw new BusinessException(ErrorCode.API_REQUEST_ERROR,"系统繁忙，请稍后再试");
         }*/
+        // 判空
         if (questionSubmitAddRequest == null || questionSubmitAddRequest.getQuestionId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        // 登录才能提交
+        // 获取当前登录用户
         final User loginUser = userFeignClient.getLoginUser(request);
 
+        // 提交
         long questionSubmitId = questionSubmitService.doQuestionSubmit(questionSubmitAddRequest, loginUser);
         return ResultUtils.success(questionSubmitId);
     }
 
+    /**
+     * Sentinel限流异常处理
+     *
+     * @param exception 异常信息
+     */
     public BaseResponse<Long> handleException(BlockException exception) {
         log.info("限流异常信息" + exception);
         return ResultUtils.success(-1L);
     }
 
+    /**
+     * Sentinel限流策略
+     */
     private static void initFlowRules() {
         List<FlowRule> rules = new ArrayList<>();
         FlowRule rule = new FlowRule();
@@ -364,93 +404,123 @@ public class QuestionController {
 
 
     /**
-     * 分页获取题目提交列表（仅管理员和该题目的提交用户可以查看）
+     * 分页获取题目提交列表
      *
-     * @param questionSubmitQueryRequest
-     * @param request
-     * @return
+     * @param questionSubmitQueryRequest 题目提交查询请求
+     * @param request                    {@link HttpServletRequest}
      */
     @PostMapping("/question_submit/list/page")
     public BaseResponse<Page<QuestionSubmitVO>> listQuestionSubmitByPage(@RequestBody QuestionSubmitQueryRequest questionSubmitQueryRequest,
                                                                          HttpServletRequest request) {
+        // 获取分页参数
         long current = questionSubmitQueryRequest.getCurrent();
         long size = questionSubmitQueryRequest.getPageSize();
+        // 获取当前登录用户
         User loginUser = userFeignClient.getLoginUser(request);
         // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
+        // 查询
         Page<QuestionSubmit> questionPage = questionSubmitService.page(new Page<>(current, size),
                 questionSubmitService.getQueryWrapper(questionSubmitQueryRequest));
+        // 返回
         return ResultUtils.success(questionSubmitService.getQuestionSubmitVOPage(questionPage, loginUser));
     }
 
     /**
-     * 分页获取个人题目提交列表
+     * 分页获取个人提交列表
      *
-     * @param questionSubmitQueryRequest
-     * @param request
-     * @return
+     * @param questionSubmitQueryRequest 题目提交查询请求
+     * @param request                    {@link HttpServletRequest}
      */
     @PostMapping("/question_submit/my/list/page")
     public BaseResponse<Page<QuestionSubmitVO>> listMyQuestionSubmitByPage(@RequestBody QuestionSubmitQueryRequest questionSubmitQueryRequest,
                                                                            HttpServletRequest request) {
+        // 获取分页参数
         long current = questionSubmitQueryRequest.getCurrent();
         long size = questionSubmitQueryRequest.getPageSize();
         String language = questionSubmitQueryRequest.getLanguage();
         Long questionId = questionSubmitQueryRequest.getQuestionId();
+        // 获取当前登录用户
         User loginUser = userFeignClient.getLoginUser(request);
         // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-        // 查询
+        ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
+        // 查询用户在该题目下的所有提交记录
         Long userId = loginUser.getId();
         String tableName = "question_submit_" + userId;
         List<QuestionSubmit> questionSubmitList = questionSubmitMapper.queryQuestionSubmitList(tableName, size, (current - 1) * size, language, questionId);
+        // 获取用户在该题目下的提交次数
         long total = questionSubmitMapper.countQuestionSubmitAll(tableName, questionId);
-
+        // 组装
         Page<QuestionSubmit> questionPage = new Page<>();
         questionPage.setRecords(questionSubmitList);
         questionPage.setCurrent(current);
         questionPage.setSize(size);
         questionPage.setTotal(total);
+        // 返回
         return ResultUtils.success(questionSubmitService.getQuestionSubmitVOPage(questionPage, loginUser));
     }
 
+    /**
+     * 获取支持的编程语言
+     */
     @GetMapping("/get/language")
     public BaseResponse<List<String>> getCodeLanguage() {
         return ResultUtils.success(QuestionSubmitLanguageEnum.getValues());
     }
 
+    /**
+     * 在线运行代码
+     * @param runCodeRequest 运行代码请求
+     */
     @PostMapping("/run/online")
     public BaseResponse<RunCodeResponse> questionRunOnline(@RequestBody RunCodeRequest runCodeRequest) {
+        // 在线运行代码只需要提供一个输入用例，但执行代码请求需要输入用例以集合的方式传入，所以需要转换为集合，但集合只有一个元素
         List<String> inputList = Arrays.asList(runCodeRequest.getInput());
+        // 构造执行代码请求
         ExecuteCodeRequest executeCodeRequest =
                 ExecuteCodeRequest.builder()
                         .code(runCodeRequest.getCode())
                         .language(runCodeRequest.getLanguage())
                         .inputList(inputList)
                         .build();
+        // 运行
         ExecuteCodeResponse executeCodeResponse = judgeFeignClient.runOnline(executeCodeRequest);
+        // 获取输出
         List<String> outputList = Optional.ofNullable(executeCodeResponse.getOutputList()).orElse(Arrays.asList(""));
+        // 构造运行代码响应
         RunCodeResponse runCodeResponse = RunCodeResponse.builder()
                 .output(outputList.get(0))
                 .message(executeCodeResponse.getMessage())
                 .status(executeCodeResponse.getStatus())
                 .judgeInfo(executeCodeResponse.getJudgeInfo())
                 .build();
+        // 返回
         return ResultUtils.success(runCodeResponse);
     }
 
+    /**
+     * 获取上一道题目
+     * @param questionId 当前题目id
+     */
     @GetMapping("/get/questionId/previous")
     public BaseResponse<Long> getPrevQuestion(@RequestParam("questionId") long questionId) {
         String tableName = "question";
         return ResultUtils.success(questionMapper.getPrevQuestion(tableName, questionId));
     }
 
+    /**
+     * 获取下一道题目
+     * @param questionId 当前题目id
+     */
     @GetMapping("/get/questionId/next")
     public BaseResponse<Long> getNextQuestion(@RequestParam("questionId") long questionId) {
         String tableName = "question";
         return ResultUtils.success(questionMapper.getNextQuestion(tableName, questionId));
     }
 
+    /**
+     * 随机获取一道题目
+     */
     @GetMapping("/get/questionId/random")
     public BaseResponse<Long> getRandomQuestion() {
         List<Question> questionList = questionMapper.selectList(null);

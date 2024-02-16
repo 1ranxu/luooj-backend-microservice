@@ -10,26 +10,32 @@
         <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
         <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
-
+    <!--向个人通过题目表新增通过题目的id-->
     <insert id="addAcceptedQuestion">
         insert into ${tableName} (questionId)
         values (#{questionId})
     </insert>
 
-    <select id="queryAcceptedQuestionList" parameterType="string" resultType="com.luoying.luoojbackendmodel.entity.AcceptedQuestion">
-        select * from ${tableName}
+    <!--根据表名 获取该用户所有通过的题目-->
+    <select id="queryAcceptedQuestionList" parameterType="string"
+            resultType="com.luoying.luoojbackendmodel.entity.AcceptedQuestion">
+        select *
+        from ${tableName}
     </select>
 
+    <!--是否存在表-->
     <select id="existAcceptedQuestionTable" parameterType="string" resultType="java.lang.Integer">
         select count(*)
         from information_schema.TABLES
         where table_name = #{tableName}
     </select>
 
+    <!--删除通过题目表-->
     <update id="dropAcceptedQuestionTable" parameterType="string">
         DROP TABLE IF EXISTS ${tableName}
     </update>
 
+    <!--创建通过题目表-->
     <update id="createAcceptedQuestionTable" parameterType="string">
         CREATE TABLE ${tableName}
         (

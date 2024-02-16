@@ -17,37 +17,34 @@ import javax.servlet.http.HttpServletRequest;
 */
 public interface QuestionService extends IService<Question> {
     /**
-     * 校验
+     * 校验参数
      *
-     * @param question
-     * @param add
+     * @param question 题目
+     * @param add 是否为新增
      */
     void validQuestion(Question question, boolean add);
 
     /**
      * 获取查询条件
      *
-     * @param questionQueryRequest
-     * @return
+     * @param questionQueryRequest 题目查询请求
      */
     QueryWrapper<Question> getQueryWrapper(QuestionQueryRequest questionQueryRequest);
     
 
     /**
-     * 获取题目封装
+     * 获取封装后的题目
      *
-     * @param question
-     * @param request
-     * @return
+     * @param question 题目
+     * @param request {@link HttpServletRequest}
      */
     QuestionVO getQuestionVO(Question question, HttpServletRequest request);
 
     /**
-     * 分页获取题目封装
+     * 分页获取封装后的题目
      *
-     * @param questionPage
-     * @param request
-     * @return
+     * @param questionPage {@link Page<Question>}
+     * @param request {@link HttpServletRequest}
      */
     Page<QuestionVO> getQuestionVOPage(Page<Question> questionPage, HttpServletRequest request);
 }

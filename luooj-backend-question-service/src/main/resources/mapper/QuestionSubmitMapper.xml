@@ -16,7 +16,7 @@
         <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
         <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
-
+    <!--向 个人提交表 新增个人的提交记录-->
     <insert id="addQuestionSubmit">
         insert into ${tableName} (id, language, questionId, userId, code, judgeInfo, status)
         values (#{questionSubmit.id,jdbcType=BIGINT}, #{questionSubmit.language,jdbcType=VARCHAR},
@@ -25,10 +25,14 @@
                 #{questionSubmit.status,jdbcType=INTEGER})
     </insert>
 
+    <!--根据 个人提交表 和 题目id 获取用户该题目的提交数量-->
     <select id="countQuestionSubmitAll" resultType="java.lang.Long">
-        select count(*) from ${tableName} where questionId = #{questionId}
+        select count(*)
+        from ${tableName}
+        where questionId = #{questionId}
     </select>
 
+    <!--根据 个人提交表 页面大小 开始号 语言 题目id  获取该用户的提交记录-->
     <select id="queryQuestionSubmitList" parameterType="string"
             resultType="com.luoying.luoojbackendmodel.entity.QuestionSubmit">
         select *
@@ -45,6 +49,7 @@
         LIMIT #{size} OFFSET #{offset}
     </select>
 
+    <!--根据 个人提交表 和 提交记录id 更新该用户的提交记录-->
     <update id="updateQuestionSubmit">
         update ${tableName}
         <set>
@@ -72,17 +77,19 @@
         </where>
     </update>
 
+    <!--是否存在 个人提交表-->
     <select id="existQuestionSubmitTable" parameterType="string" resultType="java.lang.Integer">
         select count(*)
         from information_schema.TABLES
         where table_name = #{tableName}
     </select>
 
-
+    <!--删除 个人提交表-->
     <update id="dropQuestionSubmitTable" parameterType="string">
         DROP TABLE IF EXISTS ${tableName}
     </update>
 
+    <!--创建 个人提交表-->
     <update id="createQuestionSubmitTable" parameterType="string">
         create table ${tableName}
         (

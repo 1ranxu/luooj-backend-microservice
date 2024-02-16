@@ -26,6 +26,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -61,13 +62,13 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     private QuestionSubmitMapper questionSubmitMapper;
 
     /**
-     * 题目提交
-     *
-     * @param questionSubmitAddRequest
-     * @param loginUser
+     * 提交题目
+     * @param questionSubmitAddRequest 题目提交创建请求
+     * @param loginUser 登录用户
      * @return 提交记录id
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public long doQuestionSubmit(QuestionSubmitAddRequest questionSubmitAddRequest, User loginUser) {
         // 校验编程语言是否合法
         String language = questionSubmitAddRequest.getLanguage();
@@ -75,16 +76,16 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         if (languageEnum == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "编程语言错误");
         }
+        // 判断题目是否存在
         long questionId = questionSubmitAddRequest.getQuestionId();
-        // 判断实体是否存在，根据类别获取实体
         Question question = questionService.getById(questionId);
         if (question == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
         // 设置提交数
-        Integer submitNum = question.getSubmitNum();
         Question updateQuestion = new Question();
-        synchronized (question.getSubmitNum()) {
+        synchronized (this) {// 串行设置
+            Integer submitNum = question.getSubmitNum();
             submitNum = submitNum + 1;
             updateQuestion.setId(questionId);
             updateQuestion.setSubmitNum(submitNum);
@@ -93,10 +94,10 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "数据保存失败");
             }
         }
-        // 是否已题目提交
+        // 获取用户id
         long userId = loginUser.getId();
-        // 每个用户串行题目提交
         // 锁必须要包裹住事务方法
+        // 构造题目提交
         QuestionSubmit questionSubmit = new QuestionSubmit();
         questionSubmit.setUserId(userId);
         questionSubmit.setQuestionId(questionId);
@@ -113,7 +114,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         // 保存到个人提交表
         String tableName = "question_submit_" + userId;
         questionSubmitMapper.addQuestionSubmit(tableName,questionSubmit);
-        // 发送消息
+        // 发送题目id到消息队列
         messageProducer.sendMessage(EXCHANGE_NAME, ROUTING_KEY, String.valueOf(questionSubmit.getId()));
 
         // 执行判题服务
@@ -126,17 +127,18 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     }
 
     /**
-     * 获取查询包装类
+     * 获取查询条件
      *
-     * @param questionSubmitQueryRequest
-     * @return
+     * @param questionSubmitQueryRequest 题目提交查询请求
      */
     @Override
     public QueryWrapper<QuestionSubmit> getQueryWrapper(QuestionSubmitQueryRequest questionSubmitQueryRequest) {
         QueryWrapper<QuestionSubmit> queryWrapper = new QueryWrapper<>();
+        // 判空
         if (questionSubmitQueryRequest == null) {
             return queryWrapper;
         }
+        // 获取参数
         String language = questionSubmitQueryRequest.getLanguage();
         Long questionId = questionSubmitQueryRequest.getQuestionId();
         Long userId = questionSubmitQueryRequest.getUserId();
@@ -150,12 +152,16 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
         queryWrapper.eq(ObjectUtils.isNotEmpty(questionId), "questionId", questionId);
         queryWrapper.eq(QuestionSubmitStatusEnum.getEnumByValue(status) != null, "status", status);
-        queryWrapper.eq("isDelete", false);
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
     }
 
+    /**
+     * 获取封装后的题目提交
+     * @param questionSubmit 题目提交
+     * @param loginUser 登录用户
+     */
     @Override
     public QuestionSubmitVO getQuestionSubmitVO(QuestionSubmit questionSubmit, User loginUser) {
         QuestionSubmitVO questionSubmitVO = QuestionSubmitVO.objToVo(questionSubmit);
@@ -167,11 +173,18 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         return questionSubmitVO;
     }
 
+    /**
+     * 分页获取封装后的题目提交
+     * @param questionSubmitPage {@link Page<QuestionSubmit>}
+     * @param loginUser 登录用户
+     */
     @Override
     public Page<QuestionSubmitVO> getQuestionSubmitVOPage(Page<QuestionSubmit> questionSubmitPage,
                                                           User loginUser) {
+        // 获取题目提交集合
         List<QuestionSubmit> questionSubmitList = questionSubmitPage.getRecords();
         Page<QuestionSubmitVO> questionSubmitVOPage = new Page<>(questionSubmitPage.getCurrent(), questionSubmitPage.getSize(), questionSubmitPage.getTotal());
+        // 判空
         if (CollectionUtils.isEmpty(questionSubmitList)) {
             return questionSubmitVOPage;
         }
@@ -190,9 +203,11 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
             Long questionId = questionSubmit.getQuestionId();
             User user = null;
             Question question = null;
+            // 填充用户信息
             if (userIdUserListMap.containsKey(userId)) {
                 user = userIdUserListMap.get(userId).get(0);
             }
+            // 填充题目信息
             if (questionIdUserListMap.containsKey(questionId)) {
                 question = questionIdUserListMap.get(questionId).get(0);
             }

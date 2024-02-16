@@ -24,9 +24,10 @@
     <!--查询上一道题目-->
     <select id="getPrevQuestion" resultType="long">
         select id
-        from question
+        from ${tableName}
         order by id >= #{questionId}, id desc limit 1
     </select>
+
     <!--查询下一道题目-->
     <select id="getNextQuestion" resultType="long">
         select id

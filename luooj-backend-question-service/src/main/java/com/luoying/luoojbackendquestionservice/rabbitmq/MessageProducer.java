@@ -5,6 +5,10 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
+/**
+ * @author 落樱的悔恨
+ * 向消息队列发送消息
+ */
 @Component
 public class MessageProducer {
     @Resource
@@ -12,9 +16,9 @@ public class MessageProducer {
 
     /**
      * 发送消息
-     * @param exchange
-     * @param routingKey
-     * @param message
+     * @param exchange 交换机
+     * @param routingKey 路由键
+     * @param message 消息体
      */
     public void sendMessage(String exchange, String routingKey, String message) {
         rabbitTemplate.convertAndSend(exchange, routingKey, message);

@@ -14,17 +14,17 @@ import org.apache.ibatis.annotations.Param;
 public interface QuestionMapper extends BaseMapper<Question> {
     /**
      * 查询上一道题目
-     * @param tableName
-     * @param questionId
-     * @return
+     *
+     * @param tableName  表名
+     * @param questionId 当前题目id
      */
     long getPrevQuestion(@Param("tableName") String tableName, @Param("questionId") long questionId);
 
     /**
      * 查询下一道题目
-     * @param tableName
-     * @param questionId
-     * @return
+     *
+     * @param tableName  表名
+     * @param questionId 当前题目id
      */
     long getNextQuestion(@Param("tableName") String tableName, @Param("questionId") long questionId);
 

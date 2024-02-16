@@ -10,6 +10,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * @author 落樱的悔恨
+ * Redisson限流器
+ */
 @Configuration
 public class RedissonClientConfig {
     @Value("${spring.redis.host}")

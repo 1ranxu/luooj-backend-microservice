@@ -8,9 +8,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * @author 落樱的悔恨
  * MyBatis Plus 配置
- *
- * @author https://github.com/liluoying
  */
 @Configuration
 @MapperScan("com.luoying.luoojbackendquestionservice.mapper")
@@ -19,7 +18,6 @@ public class MyBatisPlusConfig {
     /**
      * 拦截器配置
      *
-     * @return
      */
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {

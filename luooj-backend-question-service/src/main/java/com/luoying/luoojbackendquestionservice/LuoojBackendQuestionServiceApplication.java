@@ -9,6 +9,9 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+/**
+ * @author 落樱的悔恨
+ */
 @SpringBootApplication
 @MapperScan("com.luoying.luoojbackendquestionservice.mapper")
 @EnableScheduling
