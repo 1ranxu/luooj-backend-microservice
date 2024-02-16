@@ -12,9 +12,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 题目
- *
- * @TableName question
+ * @author 落樱的悔恨
+ * 题目VO
  */
 @Data
 public class QuestionVO implements Serializable {
@@ -97,8 +96,7 @@ public class QuestionVO implements Serializable {
     /**
      * 包装类转对象
      *
-     * @param questionVO
-     * @return
+     * @param questionVO {@link QuestionVO}
      */
     public static Question voToObj(QuestionVO questionVO) {
         if (questionVO == null) {
@@ -122,8 +120,7 @@ public class QuestionVO implements Serializable {
     /**
      * 对象转包装类
      *
-     * @param question
-     * @return
+     * @param question {@link Question}
      */
     public static QuestionVO objToVo(Question question) {
         if (question == null) {

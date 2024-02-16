@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 import java.io.Serializable;
 
 /**
+ * @author 落樱的悔恨
  * 用户查询请求
- *
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

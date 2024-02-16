@@ -6,11 +6,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * @author 落樱的悔恨
+ * 在线运行代码响应
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class RunCodeResponse {
+    /**
+     * 输出
+     */
     private String output;
 
     /**
@@ -19,7 +26,7 @@ public class RunCodeResponse {
     private String message;
 
     /**
-     * 执行状态
+     * 判题状态
      */
     private Integer status;
 

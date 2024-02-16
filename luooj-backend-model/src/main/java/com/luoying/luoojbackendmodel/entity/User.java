@@ -7,8 +7,8 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
+ * @author 落樱的悔恨
  * 用户
- *
  */
 @TableName(value = "user")
 @Data

@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
+ * @author 落樱的悔恨
  * 文件上传业务类型枚举
- *
  */
 public enum FileUploadBizEnum {
 

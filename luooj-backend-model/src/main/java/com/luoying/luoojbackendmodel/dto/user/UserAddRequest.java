@@ -5,8 +5,8 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
+ * @author 落樱的悔恨
  * 用户创建请求
- *
  */
 @Data
 public class UserAddRequest implements Serializable {

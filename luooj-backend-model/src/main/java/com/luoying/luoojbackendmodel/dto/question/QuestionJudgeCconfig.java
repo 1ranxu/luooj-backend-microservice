@@ -2,6 +2,10 @@ package com.luoying.luoojbackendmodel.dto.question;
 
 import lombok.Data;
 
+/**
+ * @author 落樱的悔恨
+ * 判题配置
+ */
 @Data
 public class QuestionJudgeCconfig {
     /**

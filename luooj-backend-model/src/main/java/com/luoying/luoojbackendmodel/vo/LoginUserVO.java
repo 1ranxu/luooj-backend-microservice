@@ -6,7 +6,8 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 已登录用户视图（脱敏）
+ * @author 落樱的悔恨
+ * 已登录用户（脱敏）
  **/
 @Data
 public class LoginUserVO implements Serializable {

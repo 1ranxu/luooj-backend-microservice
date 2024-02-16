@@ -11,9 +11,8 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
+ * @author 落樱的悔恨
  * 题目提交VO
- *
- * @TableName question
  */
 @Data
 public class QuestionSubmitVO implements Serializable {
@@ -77,8 +76,7 @@ public class QuestionSubmitVO implements Serializable {
     /**
      * 包装类转对象
      *
-     * @param questionSubmitVO
-     * @return
+     * @param questionSubmitVO {@link QuestionSubmitVO}
      */
     public static QuestionSubmit voToObj(QuestionSubmitVO questionSubmitVO) {
         if (questionSubmitVO == null) {
@@ -96,8 +94,7 @@ public class QuestionSubmitVO implements Serializable {
     /**
      * 对象转包装类
      *
-     * @param questionSubmit
-     * @return
+     * @param questionSubmit {@link QuestionSubmit}
      */
     public static QuestionSubmitVO objToVo(QuestionSubmit questionSubmit) {
         if (questionSubmit == null) {

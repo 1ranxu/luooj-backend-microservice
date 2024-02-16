@@ -8,8 +8,8 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 查询请求
- *
+ * @author 落樱的悔恨
+ * 题目查询请求
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

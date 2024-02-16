@@ -6,8 +6,8 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 编辑请求
- *
+ * @author 落樱的悔恨
+ * 题目编辑请求
  */
 @Data
 public class QuestionEditRequest implements Serializable {

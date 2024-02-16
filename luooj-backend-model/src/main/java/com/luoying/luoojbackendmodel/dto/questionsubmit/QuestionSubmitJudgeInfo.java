@@ -2,6 +2,10 @@ package com.luoying.luoojbackendmodel.dto.questionsubmit;
 
 import lombok.Data;
 
+/**
+ * @author 落樱的悔恨
+ * 题目提交判题信息
+ */
 @Data
 public class QuestionSubmitJudgeInfo {
     /**
@@ -15,7 +19,7 @@ public class QuestionSubmitJudgeInfo {
     private Long memory;
 
     /**
-     * 时间消耗 KB
+     * 时间消耗 ms
      */
     private Long time;
 }
