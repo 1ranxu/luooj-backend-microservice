@@ -49,8 +49,8 @@ public class FileController {
      * @return {@link BaseResponse<String>}
      */
     @PostMapping("/upload")
-    public BaseResponse<String> uploadFile(@RequestPart("file") MultipartFile multipartFile,
-                                           UploadFileRequest uploadFileRequest, HttpServletRequest request) {
+    public BaseResponse<String> uploadFile(UploadFileRequest uploadFileRequest, @RequestPart("file") MultipartFile multipartFile
+            , HttpServletRequest request) {
         // 获取文件的业务类型
         String biz = uploadFileRequest.getBiz();
         FileUploadBizEnum fileUploadBizEnum = FileUploadBizEnum.getEnumByValue(biz);
