@@ -4,14 +4,14 @@ package com.luoying.luoojbackendjudgeservice.judge;
 import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
 
 /**
- * 怕媒体服务
+ * @author 落樱的悔恨
+ * 判题服务
  */
 public interface JudgeService {
 
     /**
      * 判题
-     * @param questionSubmitId
-     * @return
+     * @param questionSubmitId 题目提交id
      */
     QuestionSubmitVO doJudge(long questionSubmitId);
 }

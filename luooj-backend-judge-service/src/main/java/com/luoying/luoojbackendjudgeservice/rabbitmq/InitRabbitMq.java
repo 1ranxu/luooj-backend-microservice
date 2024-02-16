@@ -10,6 +10,11 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
+
+/**
+ * @author 落樱的悔恨
+ * 消息队列初始化
+ */
 @Slf4j
 @Component
 public class InitRabbitMq {

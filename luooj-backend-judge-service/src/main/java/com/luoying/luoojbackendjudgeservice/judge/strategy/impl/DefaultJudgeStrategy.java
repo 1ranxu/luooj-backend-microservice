@@ -13,24 +13,26 @@ import java.util.List;
 import java.util.Optional;
 
 /**
+ * @author 落樱的悔恨
  * 默认判题策略
  */
 public class DefaultJudgeStrategy implements JudgeStrategy {
     /**
      * 执行判题
-     * @param judgeContext
-     * @return
+     * @param judgeContext 判题上下文
      */
     @Override
     public QuestionSubmitJudgeInfo doJudge(JudgeContext judgeContext) {
+        // 获取上下文信息
         QuestionSubmitJudgeInfo judgeInfo = judgeContext.getJudgeInfo();
         List<String> inputList = judgeContext.getInputList();
         List<String> outputList = judgeContext.getOutputList();
         Question question = judgeContext.getQuestion();
         List<QuestionJudgeCase> judgeCaseList = judgeContext.getJudgeCaseList();
 
-        // 5 根据沙箱的执行结果，设置题目的判题状态和信息
+        // 根据沙箱的执行结果，设置题目的判题状态和信息
         JudgeInfoMessagenum judgeInfoMessagenum = JudgeInfoMessagenum.ACCEPTED;
+
         // 如果judgeInfo.getMessage()不为空，说明代码沙箱执行代码的过程中有异常
         if (judgeInfo.getMessage() != null) {
             judgeInfoMessagenum = JudgeInfoMessagenum.getEnumByValue(judgeInfo.getMessage());
@@ -40,18 +42,18 @@ public class DefaultJudgeStrategy implements JudgeStrategy {
             judgeInfoResponse.setTime(judgeInfo.getTime());
             return judgeInfoResponse;
         }
-        // 5.1 先判断沙箱执行的结果输出数量是否和预期输出数量相等
+        // 1.先判断沙箱执行的结果输出数量是否和预期输出数量相等
         if (outputList.size() != inputList.size()) {
             judgeInfoMessagenum = JudgeInfoMessagenum.WRONG_ANSWER;
         }
-        // 5.2 依次判断每一项输出和预期输出是否相等
+        // 2.依次判断每一项输出和预期输出是否相等
         for (int i = 0; i < judgeCaseList.size(); i++) {
             QuestionJudgeCase judgeCase = judgeCaseList.get(i);
             if (!judgeCase.getOutput().equals(outputList.get(i))) {
                 judgeInfoMessagenum = JudgeInfoMessagenum.WRONG_ANSWER;
             }
         }
-        // 5.3 判题题目的限制是否符合要求
+        // 3.判题题目的限制是否符合要求
         QuestionJudgeCconfig questionJudgeCconfig = JSONUtil.toBean(question.getJudgeConfig(), QuestionJudgeCconfig.class);
         Long timeLimit = questionJudgeCconfig.getTimeLimit();
         Long memoryLimit = questionJudgeCconfig.getMemoryLimit();

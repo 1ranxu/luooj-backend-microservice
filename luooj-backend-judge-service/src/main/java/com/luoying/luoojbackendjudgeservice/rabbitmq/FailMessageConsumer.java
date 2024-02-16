@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 
 /**
- * 判题死信队列
  * @author 落樱的悔恨
+ * 判题死信队列
  */
 @Component
 @Slf4j
@@ -33,8 +33,8 @@ public class FailMessageConsumer {
     /**
      * 监听死信队列
      *
-     * @param message
-     * @param channel
+     * @param message 消息实体
+     * @param channel 管道
      * @param deliveryTag
      */
     @SneakyThrows
@@ -46,6 +46,7 @@ public class FailMessageConsumer {
             channel.basicNack(deliveryTag, false, false);
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "消息为空");
         }
+        // 获取题目提交
         long questionSubmitId = Long.parseLong(message);
         QuestionSubmit questionSubmit = questionFeignClient.getQuestionSubmitById(questionSubmitId);
         if (questionSubmit == null) {
@@ -54,7 +55,6 @@ public class FailMessageConsumer {
         }
         // 把题目提交总表中的提交记录的提交状态修改为失败
         questionSubmit.setStatus(QuestionSubmitStatusEnum.FAILURE.getValue());
-
         boolean update = questionFeignClient.updateQuestionSubmitById(questionSubmit);
         if (!update) {
             log.info("处理死信队列消息失败,对应提交的题目id为:{}", questionSubmit.getId());

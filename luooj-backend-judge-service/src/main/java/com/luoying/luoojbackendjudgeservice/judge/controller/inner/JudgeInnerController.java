@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
+ * @author 落樱的悔恨
  * 该服务仅内部调用，不是给前端的
  */
 @RestController
@@ -28,13 +29,20 @@ public class JudgeInnerController implements JudgeFeignClient {
     @Value("${codesandbox.type:example}")
     private String type;
 
+    /**
+     * 判题
+     * @param questionSubmitId 题目提交id
+     */
     @Override
     @PostMapping("/do")
     public QuestionSubmitVO doJudge(long questionSubmitId) {
         return judgeService.doJudge(questionSubmitId);
     }
 
-
+    /**
+     * 在线运行
+     * @param executeCodeRequest 执行代码请求
+     */
     @Override
     @PostMapping("/run")
     public ExecuteCodeResponse runOnline(@RequestBody ExecuteCodeRequest executeCodeRequest) {

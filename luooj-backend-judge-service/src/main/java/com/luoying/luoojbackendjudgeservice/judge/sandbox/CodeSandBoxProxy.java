@@ -5,6 +5,10 @@ import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeRequest;
 import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeResponse;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * @author 落樱的悔恨
+ * 代码沙箱代理
+ */
 @Slf4j
 public class CodeSandBoxProxy implements CodeSandBox {
 

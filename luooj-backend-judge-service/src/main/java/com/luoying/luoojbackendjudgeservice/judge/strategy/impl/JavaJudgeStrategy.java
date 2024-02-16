@@ -14,17 +14,18 @@ import java.util.List;
 import java.util.Optional;
 
 /**
+ * @author 落樱的悔恨
  * Java判题策略
  */
 public class JavaJudgeStrategy implements JudgeStrategy {
     /**
      * 执行判题
      *
-     * @param judgeContext
-     * @return
+     * @param judgeContext 判题上下文信息
      */
     @Override
     public QuestionSubmitJudgeInfo doJudge(JudgeContext judgeContext) {
+        // 获取上下文信息
         QuestionSubmitJudgeInfo judgeInfo = judgeContext.getJudgeInfo();
         List<String> inputList = judgeContext.getInputList();
         List<String> outputList = judgeContext.getOutputList();

@@ -26,6 +26,10 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * @author 落樱的悔恨
+ * 判题服务实现
+ */
 @Service
 public class JudgeServiceImpl implements JudgeService {
     @Resource
@@ -37,6 +41,10 @@ public class JudgeServiceImpl implements JudgeService {
     @Value("${codesandbox.type:example}")
     private String type;
 
+    /**
+     *
+     * @param questionSubmitId 题目提交id
+     */
     @Override
     public QuestionSubmitVO doJudge(long questionSubmitId) {
         // 1 传入题目的提交 id，获取到对应的题目、提交信息（包含代码、编程语言等）
@@ -73,19 +81,23 @@ public class JudgeServiceImpl implements JudgeService {
         // 获取输入用例
         List<QuestionJudgeCase> judgeCaseList = JSONUtil.toList(question.getJudgeCase(), QuestionJudgeCase.class);
         List<String> inputList = judgeCaseList.stream().map(QuestionJudgeCase::getInput).collect(Collectors.toList());
-
+        // 获取编程语言
         String language = questionSubmit.getLanguage();
+        // 使用代码沙箱工厂获取代码沙箱
         CodeSandBox codeSandBox = CodeSandBoxFactory.newInstance(type);
+        // 使用代码沙箱代理增强代码沙箱
         CodeSandBoxProxy codeSandBoxProxy = new CodeSandBoxProxy(codeSandBox);
+        // 构造执行代码请求
         ExecuteCodeRequest codeRequest = ExecuteCodeRequest.builder()
                 .inputList(inputList)
                 .code(code)
                 .language(language)
                 .build();
+        // 执行代码
         ExecuteCodeResponse executeCodeResponse = codeSandBoxProxy.executeCode(codeRequest);
         List<String> outputList = executeCodeResponse.getOutputList();
-        // 5 根据沙箱的执行结果，设置题目的判题状态和信息
 
+        // 5、根据沙箱的执行结果，设置判题上下文
         JudgeContext judgeContext = new JudgeContext();
         judgeContext.setOutputList(outputList);
         judgeContext.setInputList(inputList);
@@ -93,7 +105,7 @@ public class JudgeServiceImpl implements JudgeService {
         judgeContext.setQuestion(question);
         judgeContext.setJudgeInfo(executeCodeResponse.getJudgeInfo());
         judgeContext.setQuestionSubmit(questionSubmit);
-
+        // 使用判题管理进行判题
         QuestionSubmitJudgeInfo judgeInfo = judgeManager.doJudge(judgeContext);
         // 修改提交记录总表的判题状态和判题信息
         questionSubmitUpdate = new QuestionSubmit();
