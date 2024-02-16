@@ -3,6 +3,7 @@ package com.luoying.luoojbackendgateway.filter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.luoying.luoojbackendcommon.utils.JwtUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -12,6 +13,7 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -26,6 +28,7 @@ import java.util.Map;
  */
 // 不使用则可以注释掉@Component注解
 @Component
+@Slf4j
 public class AuthFilter implements GlobalFilter, Ordered {
     /**
      * 如果配置文件中的字符串是用,隔开的 springboot 在value时会自动变成 List<String> 的数组
@@ -33,6 +36,8 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     @Value("#{'${gateway.excludedUrls}'.split(',')}")
     private List<String> excludedUrls;
+
+    private AntPathMatcher antPathMatcher = new AntPathMatcher();
 
     /**
      * 过滤器核心代码
@@ -46,10 +51,14 @@ public class AuthFilter implements GlobalFilter, Ordered {
         // 1.排除不需要权限校验的连接
         // 当前请求连接
         String path = exchange.getRequest().getURI().getPath();
+
         // 如果 当前链接不需要校验则直接放行
-        if (excludedUrls.contains(path)) {
-            return chain.filter(exchange);
+        for (String excludedUrl : excludedUrls) {
+            if (antPathMatcher.match(excludedUrl, path)) {
+                return chain.filter(exchange);
+            }
         }
+
         // 2.获取token并校验
         String token = exchange.getRequest().getHeaders().getFirst("Authorization");
         // 不为空时把 ("Bearer"去掉) 有时候前端传来的 token是带这个的
@@ -101,6 +110,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
      */
     @Override
     public int getOrder() {
-        return Ordered.LOWEST_PRECEDENCE;
+        return 1;
     }
 }
