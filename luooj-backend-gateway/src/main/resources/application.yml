@@ -19,6 +19,10 @@ spring:
           uri: lb://luooj-backend-judge-service
           predicates:
             - Path=/api/judge/**
+        - id: luooj-backend-file-service
+          uri: lb://luooj-backend-file-service
+          predicates:
+            - Path=/api/file/**
   main:
     web-application-type: reactive
 
@@ -38,4 +42,4 @@ knife4j:
       version: swagger2
 # 这个配置是不用看token是否合法 直接通过
 gateway:
-  excludedUrls: /api/user/get/login,/api/user/logout,/user/register,/api/user/update/my,/api/user/login,/user/getLoginUser,/api/user/register,/api/question/list/page/vo,/api/file
+  excludedUrls: /api/user/get/login,/api/user/logout,/api/user/login,/api/user/register,/api/question/list/page/vo,/api/file,/doc.html,/api/user/doc.html,/api/question/doc.html,/api/judge/doc.html
