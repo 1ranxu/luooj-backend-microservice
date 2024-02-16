@@ -18,8 +18,8 @@ import java.util.List;
 import static com.luoying.luoojbackendcommon.constant.UserConstant.USER_LOGIN_STATE;
 
 /**
+ * @author 落樱的悔恨
  * 用户服务
- *
  */
 @FeignClient(name = "luooj-backend-user-service", path = "/api/user/inner")
 public interface UserFeighClient {
@@ -27,16 +27,14 @@ public interface UserFeighClient {
     /**
      * 根据id获取用户
      *
-     * @param userId
-     * @return
+     * @param userId 用户id
      */
     @GetMapping("/get/id")
     User getById(@RequestParam("userId") long userId);
 
     /**
-     * 根据id列表获取用户列表
-     * @param ids
-     * @return
+     * 根据id集合获取用户列表
+     * @param ids 用户id集合
      */
     @GetMapping("/get/ids")
     List<User> listByIds(@RequestParam("ids") Collection<Long> ids);
@@ -44,8 +42,7 @@ public interface UserFeighClient {
     /**
      * 获取当前登录用户
      *
-     * @param request
-     * @return
+     * @param request {@link HttpServletRequest}
      */
     default User getLoginUser(HttpServletRequest request) {
         // 先判断是否已登录
@@ -61,8 +58,7 @@ public interface UserFeighClient {
     /**
      * 是否为管理员
      *
-     * @param user
-     * @return
+     * @param user {@link User}
      */
     default boolean isAdmin(User user) {
         return user != null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
@@ -71,8 +67,7 @@ public interface UserFeighClient {
     /**
      * 获取脱敏的用户信息
      *
-     * @param user
-     * @return
+     * @param user {@link User}
      */
     default UserVO getUserVO(User user) {
         if (user == null) {
