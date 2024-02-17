@@ -1,6 +1,5 @@
 package com.luoying.luoojbackendjudgeservice.rabbitmq;
 
-import cn.hutool.core.util.StrUtil;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
 import com.luoying.luoojbackendjudgeservice.judge.JudgeService;
@@ -39,44 +38,51 @@ public class MessageConsumer {
 
     //指定程序监听的消息队列和确认机制
     @RabbitListener(queues = {QUEUE_NAME}, ackMode = "MANUAL")
-    public void receiveMessage(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag)
-            throws IOException {
-        log.info("receiveMessage message={}", message);
-        long questionSubmitId = Long.parseLong(message);
-        if (StringUtils.isBlank(message)) {
-            // 消息为空，则拒绝消息（不重试），进入死信队列
-            channel.basicNack(deliveryTag, false, false);
-            throw new BusinessException(ErrorCode.NULL_ERROR, "消息为空");
-        }
+    public void receiveMessage(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
         try {
+            if (StringUtils.isBlank(message)) {
+                // 消息为空，则拒绝消息（不重试），进入死信队列
+                log.info("消息为空，拒绝消息，消息进入死信队列 message={}", message);
+                channel.basicNack(deliveryTag, false, false);
+                return;
+            }
+            log.info("receiveMessage message={}", message);
+            long questionSubmitId = Long.parseLong(message);
+
             // 判题
             judgeService.doJudge(questionSubmitId);
+
             // 判断提交状态是否为判题成功
             QuestionSubmit questionSubmit = questionFeignClient.getQuestionSubmitById(questionSubmitId);
+            log.info("判题后的questionSubmit:{}", questionSubmit);
             if (!QuestionSubmitStatusEnum.SUCCESS.getValue().equals(questionSubmit.getStatus())) {
-                throw new BusinessException(ErrorCode.OPERATION_ERROR, "判题失败");
+                log.info("判题失败，确认消息，message={}", message);
+                channel.basicAck(deliveryTag, false);
+                return;
             }
 
             // 判断题目是否通过
             QuestionSubmitVO questionSubmitVO = QuestionSubmitVO.objToVo(questionSubmit);
             if (!JudgeInfoMessagenum.ACCEPTED.getValue().equals(questionSubmitVO.getJudgeInfo().getMessage())) {
+                log.info("未通过，确认消息，message={}", message);
                 channel.basicAck(deliveryTag, false);
                 return;
             }
+
             // 设置通过数
             Long questionId = questionSubmit.getQuestionId();
             Question question = questionFeignClient.getQuestionById(questionId);
             Question updateQuestion = new Question();
-            synchronized (this) {
-                Integer acceptedNum = question.getAcceptedNum();
-                acceptedNum = acceptedNum + 1;
-                updateQuestion.setId(questionId);
-                updateQuestion.setAcceptedNum(acceptedNum);
-                boolean save = questionFeignClient.updateQuestionById(updateQuestion);
-                if (!save) {
-                    throw new BusinessException(ErrorCode.OPERATION_ERROR, "保存数据失败");
-                }
+
+            Integer acceptedNum = question.getAcceptedNum();
+            acceptedNum = acceptedNum + 1;
+            updateQuestion.setId(questionId);
+            updateQuestion.setAcceptedNum(acceptedNum);
+            boolean save = questionFeignClient.updateQuestionById(updateQuestion);
+            if (!save) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "保存数据失败");
             }
+
             // 设置个人题目通过表
             try {
                 Long userId = questionSubmit.getUserId();
@@ -88,7 +94,12 @@ public class MessageConsumer {
             // 确认消息
             channel.basicAck(deliveryTag, false);
         } catch (Exception e) {
-            channel.basicNack(deliveryTag, false, false);
+            try {
+                log.info("消费消息失败，拒绝消息，message={}，Exception={}",message,e);
+                channel.basicNack(deliveryTag, false, false);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 }
