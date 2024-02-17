@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
@@ -42,7 +41,6 @@ import static com.luoying.luoojbackendcommon.constant.UserConstant.USER_LOGIN_ST
  */
 @Service
 @Slf4j
-@Transactional
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
 

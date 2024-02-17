@@ -3,11 +3,11 @@ package com.luoying.luoojbackendquestionservice.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.google.gson.Gson;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.constant.CommonConstant;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
 import com.luoying.luoojbackendcommon.exception.ThrowUtils;
+import com.luoying.luoojbackendcommon.utils.SqlUtils;
 import com.luoying.luoojbackendmodel.dto.question.QuestionQueryRequest;
 import com.luoying.luoojbackendmodel.entity.AcceptedQuestion;
 import com.luoying.luoojbackendmodel.entity.Question;
@@ -17,13 +17,11 @@ import com.luoying.luoojbackendmodel.vo.UserVO;
 import com.luoying.luoojbackendquestionservice.mapper.AcceptedQuestionMapper;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionMapper;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
-import com.luoying.luoojbackendcommon.utils.SqlUtils;
 import com.luoying.luoojbackendserviceclient.service.UserFeighClient;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -38,7 +36,6 @@ import java.util.stream.Collectors;
  * @createDate 2023-11-09 16:32:34
  */
 @Service
-@Transactional
 public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         implements QuestionService {
     @Resource

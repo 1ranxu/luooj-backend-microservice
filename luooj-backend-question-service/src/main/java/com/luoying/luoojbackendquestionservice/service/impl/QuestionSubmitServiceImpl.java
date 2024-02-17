@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
  * @createDate 2023-11-09 16:32:34
  */
 @Service
-@Transactional
 public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper, QuestionSubmit>
         implements QuestionSubmitService {
     private static final String EXCHANGE_NAME = "oj_exchange";
@@ -114,9 +113,12 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         }
         // 保存到个人提交表
         String tableName = "question_submit_" + userId;
-        questionSubmitMapper.addQuestionSubmit(tableName,questionSubmit);
+        int count = questionSubmitMapper.addQuestionSubmit(tableName, questionSubmit);
+
         // 发送题目id到消息队列
-        messageProducer.sendMessage(EXCHANGE_NAME, ROUTING_KEY, String.valueOf(questionSubmit.getId()));
+        if(count > 0){
+            messageProducer.sendMessage(EXCHANGE_NAME, ROUTING_KEY, String.valueOf(questionSubmit.getId()));
+        }
 
         // 执行判题服务
         /*CompletableFuture.runAsync(() -> {
