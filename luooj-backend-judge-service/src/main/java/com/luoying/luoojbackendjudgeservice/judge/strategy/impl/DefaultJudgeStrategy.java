@@ -19,6 +19,7 @@ import java.util.Optional;
 public class DefaultJudgeStrategy implements JudgeStrategy {
     /**
      * 执行判题
+     *
      * @param judgeContext 判题上下文
      */
     @Override
@@ -37,7 +38,7 @@ public class DefaultJudgeStrategy implements JudgeStrategy {
         if (judgeInfo.getMessage() != null) {
             judgeInfoMessagenum = JudgeInfoMessagenum.getEnumByValue(judgeInfo.getMessage());
             QuestionSubmitJudgeInfo judgeInfoResponse = new QuestionSubmitJudgeInfo();
-            judgeInfoResponse.setMessage(judgeInfoMessagenum.getValue());
+            judgeInfoResponse.setMessage(judgeInfoMessagenum == null ? judgeInfo.getMessage() : judgeInfoMessagenum.getValue());
             judgeInfoResponse.setMemory(Optional.ofNullable(judgeInfo.getMemory()).orElse(500L));
             judgeInfoResponse.setTime(judgeInfo.getTime());
             return judgeInfoResponse;

@@ -9,7 +9,6 @@ import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitJudgeInfo;
 import com.luoying.luoojbackendmodel.entity.Question;
 import com.luoying.luoojbackendmodel.enums.JudgeInfoMessagenum;
 
-
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +37,7 @@ public class JavaJudgeStrategy implements JudgeStrategy {
         if (judgeInfo.getMessage() != null) {
             judgeInfoMessagenum = JudgeInfoMessagenum.getEnumByValue(judgeInfo.getMessage());
             QuestionSubmitJudgeInfo judgeInfoResponse = new QuestionSubmitJudgeInfo();
-            judgeInfoResponse.setMessage(judgeInfoMessagenum.getValue());
+            judgeInfoResponse.setMessage(judgeInfoMessagenum == null ? judgeInfo.getMessage() : judgeInfoMessagenum.getValue());
             judgeInfoResponse.setMemory(Optional.ofNullable(judgeInfo.getMemory()).orElse(500L));
             judgeInfoResponse.setTime(judgeInfo.getTime());
             return judgeInfoResponse;

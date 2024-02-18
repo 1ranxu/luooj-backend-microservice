@@ -9,10 +9,7 @@ import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeResponse;
 import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
 import com.luoying.luoojbackendserviceclient.service.JudgeFeignClient;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -31,16 +28,18 @@ public class JudgeInnerController implements JudgeFeignClient {
 
     /**
      * 判题
+     *
      * @param questionSubmitId 题目提交id
      */
     @Override
     @PostMapping("/do")
-    public QuestionSubmitVO doJudge(long questionSubmitId) {
+    public QuestionSubmitVO doJudge(@RequestParam("questionSubmitId") long questionSubmitId) {
         return judgeService.doJudge(questionSubmitId);
     }
 
     /**
      * 在线运行
+     *
      * @param executeCodeRequest 执行代码请求
      */
     @Override
