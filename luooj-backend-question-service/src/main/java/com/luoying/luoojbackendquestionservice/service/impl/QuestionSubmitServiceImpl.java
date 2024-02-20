@@ -112,7 +112,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         String tableName = "question_submit_" + userId;
         int count = questionSubmitMapper.addQuestionSubmit(tableName, questionSubmit);
 
-        // 发送题目id到消息队列
+        // 发送提交记录id到消息队列
         if(count > 0){
             messageProducer.sendMessage(EXCHANGE_NAME, ROUTING_KEY, String.valueOf(questionSubmit.getId()));
         }
