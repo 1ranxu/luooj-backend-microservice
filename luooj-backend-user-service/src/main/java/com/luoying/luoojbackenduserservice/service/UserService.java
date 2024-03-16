@@ -2,9 +2,7 @@ package com.luoying.luoojbackenduserservice.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.luoying.luoojbackendmodel.dto.user.UserLoginRequest;
-import com.luoying.luoojbackendmodel.dto.user.UserQueryRequest;
-import com.luoying.luoojbackendmodel.dto.user.UserRegisterRequest;
+import com.luoying.luoojbackendmodel.dto.user.*;
 import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.vo.LoginUserVO;
 import com.luoying.luoojbackendmodel.vo.UserVO;
@@ -34,6 +32,18 @@ public interface UserService extends IService<User> {
      * @return 登录用户信息(脱敏)
      */
     LoginUserVO userLogin(UserLoginRequest userLoginRequest, HttpServletRequest request);
+
+    /**
+     * 邮箱账号注册
+     */
+    long userEmailRegister(UserEmailRegisterRequest userEmailRegisterRequest);
+
+    /**
+     * 邮箱账号登录
+     *
+     * @return 脱敏后的用户信息
+     */
+    LoginUserVO userEmailLogin(UserEmailLoginRequest userEmailLoginRequest, HttpServletRequest request);
 
     /**
      * 用户登出
@@ -95,4 +105,14 @@ public interface UserService extends IService<User> {
      * @param user 用户信息
      */
     boolean isAdmin(User user);
+
+    /**
+     * 绑定邮箱
+     */
+    UserVO userBindEmail(UserBindEmailRequest userBindEmailRequest, User loginUser);
+
+    /**
+     * 解除邮箱绑定
+     */
+    UserVO userUnBindEmail(UserUnBindEmailRequest userUnBindEmailRequest, User loginUser);
 }

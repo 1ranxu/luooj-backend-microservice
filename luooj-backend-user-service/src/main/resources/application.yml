@@ -27,6 +27,16 @@ spring:
     port: 6379
     timeout: 5000
     password: 123
+  mail:
+    host: smtp.qq.com
+    username: xxxxxx@qq.com
+    password: xxxxxx #授权码
+    emailFrom: xxxxxx@qq.com
+    properties:
+      mail:
+        smtp:
+          ssl:
+            enable: true
   # 文件上传
   servlet:
     multipart:

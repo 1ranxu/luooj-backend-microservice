@@ -1,16 +1,19 @@
 package com.luoying.luoojbackenduserservice.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.constant.CommonConstant;
+import com.luoying.luoojbackendcommon.constant.RedisKey;
+import com.luoying.luoojbackendcommon.constant.UserConstant;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
 import com.luoying.luoojbackendcommon.utils.JwtUtils;
 import com.luoying.luoojbackendcommon.utils.SqlUtils;
-import com.luoying.luoojbackendmodel.dto.user.UserLoginRequest;
-import com.luoying.luoojbackendmodel.dto.user.UserQueryRequest;
-import com.luoying.luoojbackendmodel.dto.user.UserRegisterRequest;
+import com.luoying.luoojbackendmodel.dto.user.*;
 import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.enums.UserRoleEnum;
 import com.luoying.luoojbackendmodel.vo.LoginUserVO;
@@ -21,6 +24,7 @@ import com.luoying.luoojbackenduserservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
@@ -32,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.luoying.luoojbackendcommon.constant.RedisKey.EMAIL_CAPTCHA_KEY;
 import static com.luoying.luoojbackendcommon.constant.UserConstant.SALT;
 import static com.luoying.luoojbackendcommon.constant.UserConstant.USER_LOGIN_STATE;
 
@@ -47,6 +52,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Resource
     private QuestionFeignClient questionFeignClient;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 注册
@@ -147,6 +155,112 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (user == null) {
             log.info("user login failed, userAccount cannot match userPassword");
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
+        }
+        // 3. 记录用户的登录态
+        request.getSession().setAttribute(USER_LOGIN_STATE, user);
+        // 4、将登录信息保存在token中，通过JWT生成token(存入id和账号)
+        Map<String, Object> tokenMap = new HashMap<>();
+        tokenMap.put("id", user.getId());
+        tokenMap.put("userAccount", user.getUserAccount());
+        String token = JwtUtils.getToken(tokenMap);
+        // 5、构造返回值
+        LoginUserVO loginUserVO = this.getLoginUserVO(user);
+        loginUserVO.setToken(token);
+        return loginUserVO;
+    }
+
+    @Override
+    public long userEmailRegister(UserEmailRegisterRequest userEmailRegisterRequest) {
+        String userName = userEmailRegisterRequest.getUserName();
+        String emailAccount = userEmailRegisterRequest.getEmailAccount();
+        String captcha = userEmailRegisterRequest.getCaptcha();
+        // 1. 校验
+        if (StringUtils.isAnyBlank(userName, emailAccount, captcha)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
+        }
+        if (userName.length() < 4 || userName.length() > 15) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "昵称长度介于4~15位");
+        }
+        String regex = "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$";
+        if (!emailAccount.matches(regex)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "无效的邮箱地址");
+        }
+
+        String cacheCaptcha = stringRedisTemplate.opsForValue().get(RedisKey.getKey(EMAIL_CAPTCHA_KEY, emailAccount));
+        if (StringUtils.isBlank(cacheCaptcha)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证码已过期,请重新获取");
+        }
+        if (!cacheCaptcha.equals(captcha)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证码错误");
+        }
+        synchronized (emailAccount.intern()) {
+            // 账户不能重复
+            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("userAccount", emailAccount);
+            long count = this.count(queryWrapper);
+            if (count > 0) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "该邮箱已经被注册了");
+            }
+            // 2. 插入数据
+            User user = new User();
+            user.setUserName(userName);
+            user.setUserAccount(emailAccount);
+            user.setEmail(emailAccount);
+            boolean saveResult = this.save(user);
+            if (!saveResult) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
+            }
+            long userId = user.getId();
+            // 3. 创建 个人通过题目表 和 个人提交表
+            String acceptedQuestionTable = "accepted_question_" + userId;
+            String questionSubmitTable = "question_submit_" + userId;
+            // 查询 题目通过表 是否存在
+            if (questionFeignClient.existAcceptedQuestionTable(acceptedQuestionTable)
+                    || questionFeignClient.existQuestionSubmitTable(questionSubmitTable)) {
+                // 删除旧表
+                questionFeignClient.dropAcceptedQuestionTable(acceptedQuestionTable);
+                questionFeignClient.dropQuestionSubmitTable(questionSubmitTable);
+            }
+            // 新建 题目通过表 和 个人提交表
+            questionFeignClient.createAcceptedQuestionTable(acceptedQuestionTable);
+            questionFeignClient.createQuestionSubmitTable(questionSubmitTable);
+            return user.getId();
+        }
+    }
+
+    @Override
+    public LoginUserVO userEmailLogin(UserEmailLoginRequest userEmailLoginRequest, HttpServletRequest request) {
+        String emailAccount = userEmailLoginRequest.getEmailAccount();
+        String captcha = userEmailLoginRequest.getCaptcha();
+        // 1. 校验
+        if (StringUtils.isAnyBlank(emailAccount, captcha)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
+        }
+        // 校验邮箱
+        String regex = "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$";
+        if (!emailAccount.matches(regex)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "无效的邮箱地址");
+        }
+        // 校验验证码
+        String cacheCaptcha = stringRedisTemplate.opsForValue().get(RedisKey.getKey(EMAIL_CAPTCHA_KEY, emailAccount));
+        if (StringUtils.isBlank(cacheCaptcha)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证码已过期,请重新获取");
+        }
+        captcha = captcha.trim();
+        if (!cacheCaptcha.equals(captcha)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证码输入有误");
+        }
+        // 2. 查询用户是否存在
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("email", emailAccount);
+        User user = this.getOne(queryWrapper);
+        // 用户不存在
+        if (user == null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "该邮箱未绑定账号，请先绑定账号");
+        }
+        // 账号被封禁
+        if (UserConstant.BAN_ROLE.equals(user.getUserRole())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "账号已封禁");
         }
         // 3. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
@@ -294,8 +408,94 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return user != null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
     }
 
+    /**
+     * 绑定邮箱
+     */
+    @Override
+    public UserVO userBindEmail(UserBindEmailRequest userBindEmailRequest, User loginUser) {
+        String emailAccount = userBindEmailRequest.getEmailAccount();
+        String captcha = userBindEmailRequest.getCaptcha();
+        // 1. 校验
+        if (StringUtils.isAnyBlank(emailAccount, captcha)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
+        }
+        // 校验邮箱
+        String regex = "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$";
+        if (!emailAccount.matches(regex)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "无效的邮箱地址");
+        }
+        // 校验验证码
+        String cacheCaptcha = stringRedisTemplate.opsForValue().get(RedisKey.getKey(EMAIL_CAPTCHA_KEY, emailAccount));
+        if (StringUtils.isBlank(cacheCaptcha)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证码已过期,请重新获取");
+        }
+        captcha = captcha.trim();
+        if (!cacheCaptcha.equals(captcha)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证码输入有误");
+        }
+        // 判断用户是否重复绑定相同邮箱
+        if (loginUser.getEmail() != null && emailAccount.equals(loginUser.getEmail())) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "该账号已绑定此邮箱,请使用其他的邮箱！");
+        }
+        // 判断该邮箱是否已经被他人绑定
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("email", emailAccount);
+        User user = this.getOne(queryWrapper);
+        if (user != null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "此邮箱已被他人绑定,请使用其他的邮箱！");
+        }
+        // 2. 绑定邮箱
+        user = new User();
+        user.setId(loginUser.getId());
+        user.setEmail(emailAccount);
+        boolean result = this.updateById(user);
+        if (!result) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "邮箱绑定失败,请稍后再试！");
+        }
+        loginUser.setEmail(emailAccount);
+        return getUserVO(loginUser);
+    }
 
-
+    /**
+     * 解除邮箱绑定
+     */
+    @Override
+    public UserVO userUnBindEmail(UserUnBindEmailRequest userUnBindEmailRequest, User loginUser) {
+        String emailAccount = userUnBindEmailRequest.getEmailAccount();
+        String captcha = userUnBindEmailRequest.getCaptcha();
+        // 1. 校验
+        if (StringUtils.isAnyBlank(emailAccount, captcha)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 校验邮箱
+        String regex = "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$";
+        if (!emailAccount.matches(regex)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "无效的邮箱地址");
+        }
+        // 校验验证码
+        String cacheCaptcha = stringRedisTemplate.opsForValue().get(RedisKey.getKey(EMAIL_CAPTCHA_KEY, emailAccount));
+        if (StringUtils.isBlank(cacheCaptcha)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证码已过期,请重新获取");
+        }
+        captcha = captcha.trim();
+        if (!cacheCaptcha.equals(captcha)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证码输入有误");
+        }
+        // 判断用户是否绑定该邮箱
+        if (loginUser.getEmail() == null || !emailAccount.equals(loginUser.getEmail())) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "该账号未绑定此邮箱");
+        }
+        // 解除绑定
+        User user = new User();
+        user.setId(loginUser.getId());
+        user.setEmail("");
+        boolean bindEmailResult = this.updateById(user);
+        if (!bindEmailResult) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "邮箱解绑失败,请稍后再试！");
+        }
+        loginUser.setEmail("");
+        return getUserVO(loginUser);
+    }
 
 
 }

@@ -16,6 +16,12 @@
         <java.version>1.8</java.version>
     </properties>
     <dependencies>
+        <!--email-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+            <version>2.7.16</version>
+        </dependency>
         <dependency>
             <groupId>com.luoying</groupId>
             <artifactId>luooj-backend-common</artifactId>
