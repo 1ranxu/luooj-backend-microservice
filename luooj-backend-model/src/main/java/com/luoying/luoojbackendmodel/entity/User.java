@@ -31,6 +31,11 @@ public class User implements Serializable {
     private String userPassword;
 
     /**
+     * 邮箱
+     */
+    private String email;
+
+    /**
      * 开放平台id
      */
     private String unionId;
@@ -59,6 +64,21 @@ public class User implements Serializable {
      * 用户角色：user/admin/ban
      */
     private String userRole;
+
+    /**
+     * 性别 0-男 1-女
+     */
+    private Integer gender;
+
+    /**
+     * 粉丝数
+     */
+    private Long fans;
+
+    /**
+     * 关注数
+     */
+    private Long followers;
 
     /**
      * 创建时间
