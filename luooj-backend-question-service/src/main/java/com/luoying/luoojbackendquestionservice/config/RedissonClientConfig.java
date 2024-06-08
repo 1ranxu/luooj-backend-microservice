@@ -30,8 +30,8 @@ public class RedissonClientConfig {
 
         String key = "myRateLimiter";
         RRateLimiter rateLimiter = redissonClient.getRateLimiter(key);
-        // 每五秒产生三个令牌
-        rateLimiter.setRate(RateType.OVERALL, 3, 5, RateIntervalUnit.SECONDS);
+        // 每秒产生114个令牌
+        rateLimiter.setRate(RateType.OVERALL, 114, 1, RateIntervalUnit.SECONDS);
         return rateLimiter;
     }
 }

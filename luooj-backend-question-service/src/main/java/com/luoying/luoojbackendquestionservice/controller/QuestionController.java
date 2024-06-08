@@ -1,6 +1,5 @@
 package com.luoying.luoojbackendquestionservice.controller;
 
-import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.csp.sentinel.slots.block.RuleConstant;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
@@ -12,6 +11,7 @@ import com.luoying.luoojbackendcommon.common.BaseResponse;
 import com.luoying.luoojbackendcommon.common.DeleteRequest;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.common.ResultUtils;
+import com.luoying.luoojbackendcommon.constant.RedisKey;
 import com.luoying.luoojbackendcommon.constant.UserConstant;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
 import com.luoying.luoojbackendcommon.exception.ThrowUtils;
@@ -37,11 +37,13 @@ import com.luoying.luoojbackendserviceclient.service.UserFeighClient;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RRateLimiter;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author 落樱的悔恨
@@ -61,6 +63,9 @@ public class QuestionController {
 
     @Resource
     private RRateLimiter rateLimiter;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     @Resource
     private QuestionSubmitMapper questionSubmitMapper;
@@ -163,36 +168,7 @@ public class QuestionController {
         if (questionUpdateRequest == null || questionUpdateRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        // 拷贝
-        Question question = new Question();
-        BeanUtils.copyProperties(questionUpdateRequest, question);
-        // 获取题目标签
-        List<String> tags = questionUpdateRequest.getTags();
-        if (tags != null) {
-            // 转Json字符串
-            question.setTags(GSON.toJson(tags));
-        }
-        // 获取判题用例
-        List<QuestionJudgeCase> judgeCaseList = questionUpdateRequest.getJudgeCaseList();
-        if (judgeCaseList != null) {
-            // 转Json字符串
-            question.setJudgeCase(GSON.toJson(judgeCaseList));
-        }
-        // 获取判题配置
-        QuestionJudgeCconfig judgeConfig = questionUpdateRequest.getJudgeConfig();
-        if (judgeConfig != null) {
-            // 转Json字符串
-            question.setJudgeConfig(GSON.toJson(judgeConfig));
-        }
-        // 参数校验
-        questionService.validQuestion(question, false);
-        // 判断题目是否存在
-        long id = questionUpdateRequest.getId();
-        Question oldQuestion = questionService.getById(id);
-        ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
-        // 更新
-        boolean result = questionService.updateById(question);
-        return ResultUtils.success(result);
+        return ResultUtils.success(questionService.update(questionUpdateRequest));
     }
 
     /**
@@ -222,13 +198,13 @@ public class QuestionController {
      * @param id 题目id
      */
     @GetMapping("/get/vo")
-    public BaseResponse<QuestionVO> getQuestionVOById(long id, HttpServletRequest request) {
+    public BaseResponse<QuestionVO> getQuestionVOById(@RequestParam("id") long id, HttpServletRequest request) {
         // 校验
-        if (id <= 0) {
+        if (id <= 0 || (id + "").length() != 19) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         // 查询
-        Question question = questionService.getById(id);
+        Question question = questionService.queryById(id);
         if (question == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
@@ -360,19 +336,30 @@ public class QuestionController {
      * @param request                  {@link HttpServletRequest}
      */
     @PostMapping("/question_submit")
-    @SentinelResource(value = "doQuestionSubmit", blockHandler = "handleException")
+    // @SentinelResource(value = "doQuestionSubmit", blockHandler = "handleException")
     public BaseResponse<Long> doQuestionSubmit(@RequestBody QuestionSubmitAddRequest questionSubmitAddRequest,
                                                HttpServletRequest request) {
-        /*if (!rateLimiter.tryAcquire()){
-            throw new BusinessException(ErrorCode.API_REQUEST_ERROR,"系统繁忙，请稍后再试");
-        }*/
+        // 获取当前登录用户
+        final User loginUser = userFeignClient.getLoginUser(request);
+        // 获取单个用户题目提交的key
+        String key = RedisKey.getKey(RedisKey.SINGLE_USER_QUESTION_SUBMIT_KEY, loginUser.getId());
+        // 判断该用户5秒内是否提交过
+        Boolean isExists = stringRedisTemplate.hasKey(key);
+        if (isExists) {// 5秒内提交过就不允许获取令牌
+            throw new BusinessException(ErrorCode.API_REQUEST_ERROR, "您的提交次数过于频繁，请稍后再试");
+        }
+        // 获取令牌
+        if (!rateLimiter.tryAcquire()) {
+            throw new BusinessException(ErrorCode.API_REQUEST_ERROR, "系统繁忙，请稍后再试");
+        }
+        // 获取令牌成功，添加单个用户题目提交的key，标记该用户
+        stringRedisTemplate.opsForValue().set(key, "");
+        // 设置单个用户题目提交的key的过期时间，限制每个用户五秒内只能提交一次
+        stringRedisTemplate.expire(key, RedisKey.SINGLE_USER_QUESTION_SUBMIT_KEY_TTL, TimeUnit.SECONDS);
         // 判空
         if (questionSubmitAddRequest == null || questionSubmitAddRequest.getQuestionId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        // 获取当前登录用户
-        final User loginUser = userFeignClient.getLoginUser(request);
-
         // 提交
         long questionSubmitId = questionSubmitService.doQuestionSubmit(questionSubmitAddRequest, loginUser);
         return ResultUtils.success(questionSubmitId);
@@ -470,6 +457,7 @@ public class QuestionController {
 
     /**
      * 在线运行代码
+     *
      * @param runCodeRequest 运行代码请求
      */
     @PostMapping("/run/online")
@@ -500,6 +488,7 @@ public class QuestionController {
 
     /**
      * 获取上一道题目
+     *
      * @param questionId 当前题目id
      */
     @GetMapping("/get/questionId/previous")
@@ -510,6 +499,7 @@ public class QuestionController {
 
     /**
      * 获取下一道题目
+     *
      * @param questionId 当前题目id
      */
     @GetMapping("/get/questionId/next")
