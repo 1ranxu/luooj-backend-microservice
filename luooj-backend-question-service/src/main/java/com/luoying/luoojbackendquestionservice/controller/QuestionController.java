@@ -29,7 +29,6 @@ import com.luoying.luoojbackendmodel.enums.QuestionSubmitLanguageEnum;
 import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
 import com.luoying.luoojbackendmodel.vo.QuestionVO;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionMapper;
-import com.luoying.luoojbackendquestionservice.mapper.QuestionSubmitMapper;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
 import com.luoying.luoojbackendserviceclient.service.JudgeFeignClient;
@@ -66,9 +65,6 @@ public class QuestionController {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
-
-    @Resource
-    private QuestionSubmitMapper questionSubmitMapper;
 
     @Resource
     private QuestionMapper questionMapper;
@@ -122,10 +118,8 @@ public class QuestionController {
         questionService.validQuestion(question, true);
         // 获取登录用户
         User loginUser = userFeignClient.getLoginUser(request);
-        // 设置参数
+        // 设置创建人
         question.setUserId(loginUser.getId());
-        question.setFavourNum(0);
-        question.setThumbNum(0);
         // 保存
         boolean result = questionService.save(question);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
@@ -425,26 +419,15 @@ public class QuestionController {
         // 获取分页参数
         long current = questionSubmitQueryRequest.getCurrent();
         long size = questionSubmitQueryRequest.getPageSize();
-        String language = questionSubmitQueryRequest.getLanguage();
-        Long questionId = questionSubmitQueryRequest.getQuestionId();
         // 获取当前登录用户
         User loginUser = userFeignClient.getLoginUser(request);
         // 限制爬虫
         ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
         // 查询用户在该题目下的所有提交记录
-        Long userId = loginUser.getId();
-        String tableName = "question_submit_" + userId;
-        List<QuestionSubmit> questionSubmitList = questionSubmitMapper.queryQuestionSubmitList(tableName, size, (current - 1) * size, language, questionId);
-        // 获取用户在该题目下的提交次数
-        long total = questionSubmitMapper.countQuestionSubmitAll(tableName, questionId);
-        // 组装
-        Page<QuestionSubmit> questionPage = new Page<>();
-        questionPage.setRecords(questionSubmitList);
-        questionPage.setCurrent(current);
-        questionPage.setSize(size);
-        questionPage.setTotal(total);
+        Page<QuestionSubmit> questionSubmitPage = questionSubmitService.page(new Page<>(current, size),
+                questionSubmitService.getQueryWrapper(questionSubmitQueryRequest));
         // 返回
-        return ResultUtils.success(questionSubmitService.getQuestionSubmitVOPage(questionPage, loginUser));
+        return ResultUtils.success(questionSubmitService.getQuestionSubmitVOPage(questionSubmitPage, loginUser));
     }
 
     /**

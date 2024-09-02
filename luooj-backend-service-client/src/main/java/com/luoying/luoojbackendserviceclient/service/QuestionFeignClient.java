@@ -1,6 +1,7 @@
 package com.luoying.luoojbackendserviceclient.service;
 
 
+import com.luoying.luoojbackendmodel.entity.AcceptedQuestion;
 import com.luoying.luoojbackendmodel.entity.Question;
 import com.luoying.luoojbackendmodel.entity.QuestionSubmit;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -44,61 +45,21 @@ public interface QuestionFeignClient {
     Boolean updateQuestionById(@RequestBody Question question);
 
     /**
-     * 个人通过表新增记录
-     * @param tableName 表名
-     * @param questionId 题目id
+     * 添加通过记录
+     * @param questionId
+     * @param userId
+     * @return
      */
     @PostMapping("/accepted_question/add")
-    boolean addAcceptedQuestion(@RequestParam("tableName")String tableName, @RequestParam("questionId")long questionId);
+    Boolean addAcceptedQuestion(@RequestParam("questionId") long questionId,@RequestParam("userId") long userId);
 
     /**
-     * 是否存在个人通过表
-     * @param tableName 表名
+     * 查询通过记录
+     * @param questionId
+     * @param userId
+     * @return
      */
-    @GetMapping("/accepted_question/exist/table")
-    boolean existAcceptedQuestionTable(@RequestParam("tableName") String tableName);
-
-    /**
-     * 删除个人通过表
-     * @param tableName 表名
-     */
-    @GetMapping("/accepted_question/drop/table")
-    boolean dropAcceptedQuestionTable(@RequestParam("tableName") String tableName);
-
-    /**
-     * 创建个人通过表
-     * @param tableName 表名
-     */
-    @GetMapping("/accepted_question/create/table")
-    boolean createAcceptedQuestionTable(@RequestParam("tableName") String tableName);
-
-    /**
-     * 更新个人提交表记录
-     * @param tableName 表名
-     * @param questionSubmit 提交记录
-     */
-    @PostMapping("/question_submit/update/personal")
-    boolean updateQuestionSubmit(@RequestParam("tableName") String tableName, @RequestBody QuestionSubmit questionSubmit);
-
-    /**
-     * 是否存在个人提交表
-     * @param tableName 表名
-     */
-    @GetMapping("/question_submit/exist/table")
-    boolean existQuestionSubmitTable(@RequestParam("tableName") String tableName);
-
-    /**
-     * 删除个人提交表
-     * @param tableName 表名
-     */
-    @GetMapping("/question_submit/drop/table")
-    boolean dropQuestionSubmitTable(@RequestParam("tableName") String tableName);
-
-    /**
-     * 创建个人提交表
-     * @param tableName 表名
-     */
-    @GetMapping("/question_submit/create/table")
-    boolean createQuestionSubmitTable(@RequestParam("tableName") String tableName);
+    @PostMapping("/accepted_question/get")
+    AcceptedQuestion getAcceptedQuestion(@RequestParam("questionId") long questionId, @RequestParam("userId") long userId);
 
 }

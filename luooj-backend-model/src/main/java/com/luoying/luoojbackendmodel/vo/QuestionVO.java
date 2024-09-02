@@ -59,6 +59,11 @@ public class QuestionVO implements Serializable {
     private QuestionJudgeCconfig judgeConfig;
 
     /**
+     * 评论数
+     */
+    private Long comments;
+
+    /**
      * 点赞数
      */
     private Integer thumbNum;

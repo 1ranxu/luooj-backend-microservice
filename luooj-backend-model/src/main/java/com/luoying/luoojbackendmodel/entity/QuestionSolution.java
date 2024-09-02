@@ -7,17 +7,22 @@ import java.util.Date;
 import lombok.Data;
 
 /**
- * 题解评论表
- * @TableName solution_comment
+ * 题解表
+ * @TableName question_solution
  */
-@TableName(value ="solution_comment")
+@TableName(value ="question_solution")
 @Data
-public class SolutionComment implements Serializable {
+public class QuestionSolution implements Serializable {
     /**
-     * 主键
+     * 题解id
      */
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
+
+    /**
+     * 题目id
+     */
+    private Long questionId;
 
     /**
      * 用户id
@@ -25,22 +30,12 @@ public class SolutionComment implements Serializable {
     private Long userId;
 
     /**
-     * 题解id
+     * 题解标题
      */
-    private Long solutionId;
+    private String title;
 
     /**
-     * 本评论关联的1级评论id，如果本评论是一级评论，则值为0
-     */
-    private Long parentId;
-
-    /**
-     * 本评论回复的评论的id
-     */
-    private Long respondId;
-
-    /**
-     * 回复内容
+     * 题解内容
      */
     private String content;
 
@@ -50,9 +45,14 @@ public class SolutionComment implements Serializable {
     private Long likes;
 
     /**
-     * 状态，0：正常，1：被举报，2：禁止查看
+     * 评论数
      */
-    private Integer status;
+    private Long comments;
+
+    /**
+     * 收藏数
+     */
+    private Long favourNum;
 
     /**
      * 创建时间

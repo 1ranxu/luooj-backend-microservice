@@ -50,7 +50,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
         // 当前请求连接
         String path = exchange.getRequest().getURI().getPath();
 
-        // 如果 当前链接不需要校验则直接放行
+        // 如果当前链接不需要校验则直接放行
         for (String excludedUrl : excludedUrls) {
             if (antPathMatcher.match(excludedUrl, path)) {
                 return chain.filter(exchange);
@@ -64,8 +64,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             token = token.replace("Bearer ", "");
         }
         ServerHttpResponse response = exchange.getResponse();
-        // 3.如果校验失败，相应状态码 401
-        // 2、使用工具类，判断token是否有效
+        // 使用工具类，判断token是否有效
         boolean verifyToken = JwtUtils.verifyToken(token);
         // 3、如果token失效，返回状态码401，拦截
         if (!verifyToken) {

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.luoying.luoojbackendquestionservice.mapper.ContestApplyMapper">
+
+    <resultMap id="BaseResultMap" type="com.luoying.luoojbackendmodel.entity.ContestApply">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="contestId" column="contestId" jdbcType="BIGINT"/>
+            <result property="applicantId" column="applicantId" jdbcType="BIGINT"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,contestId,applicantId,
+        createTime,updateTime,isDelete
+    </sql>
+</mapper>

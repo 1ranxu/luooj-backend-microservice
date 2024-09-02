@@ -7,47 +7,52 @@ import java.util.Date;
 import lombok.Data;
 
 /**
- * 题解表
- * @TableName solution
+ * 竞赛表
+ * @TableName contest
  */
-@TableName(value ="solution")
+@TableName(value ="contest")
 @Data
-public class Solution implements Serializable {
+public class Contest implements Serializable {
     /**
-     * 主键
+     * 竞赛id
      */
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
-     * 题目id
-     */
-    private Long questionId;
-
-    /**
-     * 用户id
-     */
-    private Long userId;
-
-    /**
-     * 题解标题
+     * 竞赛标题
      */
     private String title;
 
     /**
-     * 题解内容
+     * 开始时间
      */
-    private String content;
+    private Date startTime;
 
     /**
-     * 点赞数
+     * 结束时间
      */
-    private Long likes;
+    private Date endTime;
 
     /**
-     * 评论数
+     * 竞赛奖励
      */
-    private Long comments;
+    private String award;
+
+    /**
+     * 重要提示
+     */
+    private String tips;
+
+    /**
+     * 题目列表（json 数组）
+     */
+    private String questions;
+
+    /**
+     * 创建用户 id
+     */
+    private Long userId;
 
     /**
      * 创建时间
@@ -60,7 +65,7 @@ public class Solution implements Serializable {
     private Date updateTime;
 
     /**
-     * 逻辑删除 0-删除 1-正常
+     * 是否删除
      */
     @TableLogic
     private Integer isDelete;

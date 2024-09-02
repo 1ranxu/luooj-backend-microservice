@@ -14,8 +14,9 @@
         <result property="acceptedNum" column="acceptedNum" jdbcType="INTEGER"/>
         <result property="judgeConfig" column="judgeConfig" jdbcType="VARCHAR"/>
         <result property="judgeCase" column="judgeCase" jdbcType="VARCHAR"/>
-        <result property="thumbNum" column="thumbNum" jdbcType="INTEGER"/>
-        <result property="favourNum" column="favourNum" jdbcType="INTEGER"/>
+        <result property="comments" column="comments" jdbcType="BIGINT"/>
+        <result property="thumbNum" column="thumbNum" jdbcType="BIGINT"/>
+        <result property="favourNum" column="favourNum" jdbcType="BIGINT"/>
         <result property="userId" column="userId" jdbcType="BIGINT"/>
         <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
         <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
@@ -40,8 +41,9 @@
         ,title,content,
         tags,answer,submitNum,
         acceptedNum,judgeConfig,judgeCase,
-        thumbNum,favourNum,userId,
-        createTime,updateTime,isDelete
+        comments,thumbNum,favourNum,
+        userId,createTime,updateTime,
+        isDelete
     </sql>
 
 

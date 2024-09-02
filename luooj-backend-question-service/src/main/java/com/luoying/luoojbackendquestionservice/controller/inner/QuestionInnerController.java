@@ -1,9 +1,10 @@
 package com.luoying.luoojbackendquestionservice.controller.inner;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.luoying.luoojbackendmodel.entity.AcceptedQuestion;
 import com.luoying.luoojbackendmodel.entity.Question;
 import com.luoying.luoojbackendmodel.entity.QuestionSubmit;
-import com.luoying.luoojbackendquestionservice.mapper.AcceptedQuestionMapper;
-import com.luoying.luoojbackendquestionservice.mapper.QuestionSubmitMapper;
+import com.luoying.luoojbackendquestionservice.service.AcceptedQuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
 import com.luoying.luoojbackendserviceclient.service.QuestionFeignClient;
@@ -26,10 +27,7 @@ public class QuestionInnerController implements QuestionFeignClient {
     private QuestionSubmitService questionSubmitService;
 
     @Resource
-    private AcceptedQuestionMapper acceptedQuestionMapper;
-
-    @Resource
-    private QuestionSubmitMapper questionSubmitMapper;
+    private AcceptedQuestionService acceptedQuestionService;
 
     /**
      * 根据questionId获取Question
@@ -76,93 +74,32 @@ public class QuestionInnerController implements QuestionFeignClient {
     }
 
     /**
-     * 个人通过表新增记录
+     * 添加通过记录
      *
-     * @param tableName  表名
-     * @param questionId 题目id
+     * @param questionId
+     * @param userId
+     * @return
      */
     @Override
     @PostMapping("/accepted_question/add")
-    public boolean addAcceptedQuestion(@RequestParam("tableName")String tableName, @RequestParam("questionId")long questionId) {
-        return acceptedQuestionMapper.addAcceptedQuestion(tableName, questionId) == 1;
+    public Boolean addAcceptedQuestion(long questionId, long userId) {
+        AcceptedQuestion acceptedQuestion = new AcceptedQuestion();
+        acceptedQuestion.setQuestionId(questionId);
+        acceptedQuestion.setUserId(userId);
+        return acceptedQuestionService.save(acceptedQuestion);
     }
 
     /**
-     * 是否存在个人通过表
+     * 查询通过记录
      *
-     * @param tableName 表名
+     * @param questionId
+     * @param userId
+     * @return
      */
-    @Override
-    @GetMapping("/accepted_question/exist/table")
-    public boolean existAcceptedQuestionTable(@RequestParam("tableName") String tableName) {
-        return acceptedQuestionMapper.existAcceptedQuestionTable(tableName) == 1;
+    @PostMapping("/accepted_question/get")
+    public AcceptedQuestion getAcceptedQuestion(@RequestParam("questionId") long questionId, @RequestParam("userId") long userId) {
+        LambdaQueryWrapper<AcceptedQuestion> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AcceptedQuestion::getQuestionId, questionId).eq(AcceptedQuestion::getUserId, userId);
+        return acceptedQuestionService.getOne(queryWrapper);
     }
-
-    /**
-     * 删除个人通过表
-     *
-     * @param tableName 表名
-     */
-    @Override
-    @GetMapping("/accepted_question/drop/table")
-    public boolean dropAcceptedQuestionTable(@RequestParam("tableName") String tableName) {
-        return acceptedQuestionMapper.dropAcceptedQuestionTable(tableName) == 0;
-    }
-
-    /**
-     * 创建个人通过表
-     *
-     * @param tableName 表名
-     */
-    @Override
-    @GetMapping("/accepted_question/create/table")
-    public boolean createAcceptedQuestionTable(@RequestParam("tableName") String tableName) {
-        return acceptedQuestionMapper.createAcceptedQuestionTable(tableName) == 0;
-    }
-
-    /**
-     * 更新个人提交表记录
-     *
-     * @param tableName      表名
-     * @param questionSubmit 提交记录
-     */
-    @Override
-    @PostMapping("/question_submit/update/personal")
-    public boolean updateQuestionSubmit(@RequestParam("tableName") String tableName, @RequestBody QuestionSubmit questionSubmit) {
-        return questionSubmitMapper.updateQuestionSubmit(tableName, questionSubmit) == 1;
-    }
-
-    /**
-     * 是否存在个人提交表
-     *
-     * @param tableName 表名
-     */
-    @Override
-    @GetMapping("/question_submit/exist/table")
-    public boolean existQuestionSubmitTable(@RequestParam("tableName") String tableName) {
-        return questionSubmitMapper.existQuestionSubmitTable(tableName) == 1;
-    }
-
-    /**
-     * 删除个人提交表
-     *
-     * @param tableName 表名
-     */
-    @Override
-    @GetMapping("/question_submit/drop/table")
-    public boolean dropQuestionSubmitTable(@RequestParam("tableName") String tableName) {
-        return questionSubmitMapper.dropQuestionSubmitTable(tableName) == 0;
-    }
-
-    /**
-     * 创建个人提交表
-     *
-     * @param tableName 表名
-     */
-    @Override
-    @GetMapping("/question_submit/create/table")
-    public boolean createQuestionSubmitTable(@RequestParam("tableName") String tableName) {
-        return questionSubmitMapper.createQuestionSubmitTable(tableName) == 0;
-    }
-
 }

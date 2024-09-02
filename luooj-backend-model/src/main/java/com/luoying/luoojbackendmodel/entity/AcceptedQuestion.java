@@ -1,21 +1,33 @@
 package com.luoying.luoojbackendmodel.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
-import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
+import lombok.Data;
 
 /**
- * @author 落樱的悔恨
- * 通过的题目
+ * 题目通过表
+ * @TableName accepted_question
  */
+@TableName(value ="accepted_question")
 @Data
 public class AcceptedQuestion implements Serializable {
     /**
-     * id
+     * 通过记录id
+     */
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
+    private Long id;
+
+    /**
+     * 题目id
      */
     private Long questionId;
+
+    /**
+     * 用户id
+     */
+    private Long userId;
 
     /**
      * 创建时间

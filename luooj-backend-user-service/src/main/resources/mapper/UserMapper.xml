@@ -2,20 +2,19 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="generator.mapper.UserMapper">
+<mapper namespace="com.luoying.luoojbackenduserservice.mapper.UserMapper">
 
     <resultMap id="BaseResultMap" type="com.luoying.luoojbackendmodel.entity.User">
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="userAccount" column="userAccount" jdbcType="VARCHAR"/>
             <result property="userPassword" column="userPassword" jdbcType="VARCHAR"/>
             <result property="email" column="email" jdbcType="VARCHAR"/>
-            <result property="unionId" column="unionId" jdbcType="VARCHAR"/>
-            <result property="mpOpenId" column="mpOpenId" jdbcType="VARCHAR"/>
             <result property="userName" column="userName" jdbcType="VARCHAR"/>
             <result property="userAvatar" column="userAvatar" jdbcType="VARCHAR"/>
             <result property="userProfile" column="userProfile" jdbcType="VARCHAR"/>
             <result property="userRole" column="userRole" jdbcType="VARCHAR"/>
             <result property="gender" column="gender" jdbcType="TINYINT"/>
+            <result property="score" column="score" jdbcType="BIGINT"/>
             <result property="fans" column="fans" jdbcType="BIGINT"/>
             <result property="followers" column="followers" jdbcType="BIGINT"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
@@ -25,10 +24,9 @@
 
     <sql id="Base_Column_List">
         id,userAccount,userPassword,
-        email,unionId,mpOpenId,
-        userName,userAvatar,userProfile,
-        userRole,gender,fans,
-        followers,createTime,updateTime,
-        isDelete
+        email,userName,userAvatar,
+        userProfile,userRole,gender,
+        score,fans,followers,
+        createTime,updateTime,isDelete
     </sql>
 </mapper>

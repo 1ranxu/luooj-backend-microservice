@@ -5,14 +5,14 @@
 <mapper namespace="com.luoying.luoojbackenduserservice.mapper.FollowMapper">
 
     <resultMap id="BaseResultMap" type="com.luoying.luoojbackendmodel.entity.Follow">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="userId" column="userId" jdbcType="BIGINT"/>
-            <result property="followUserId" column="followUserId" jdbcType="BIGINT"/>
-            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="userId" column="userId" jdbcType="BIGINT"/>
+        <result property="fansId" column="fansId" jdbcType="BIGINT"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,userId,followUserId,
+        id,userId,fansId,
         createTime
     </sql>
 </mapper>

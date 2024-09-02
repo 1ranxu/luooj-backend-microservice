@@ -1,5 +1,7 @@
 package com.luoying.luoojbackendmodel.dto.user;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -16,14 +18,24 @@ public class UserUpdateRequest implements Serializable {
     private Long id;
 
     /**
+     * 账号
+     */
+    private String userAccount;
+
+    /**
+     * 密码
+     */
+    private String userPassword;
+
+    /**
+     * 邮箱
+     */
+    private String email;
+
+    /**
      * 用户昵称
      */
     private String userName;
-
-    /**
-     * 用户密码
-     */
-    private String userPassword;
 
     /**
      * 用户头像
@@ -31,7 +43,7 @@ public class UserUpdateRequest implements Serializable {
     private String userAvatar;
 
     /**
-     * 简介
+     * 用户简介
      */
     private String userProfile;
 
@@ -39,6 +51,16 @@ public class UserUpdateRequest implements Serializable {
      * 用户角色：user/admin/ban
      */
     private String userRole;
+
+    /**
+     * 性别 0-男 1-女
+     */
+    private Integer gender;
+
+    /**
+     * 积分
+     */
+    private Long score;
 
     private static final long serialVersionUID = 1L;
 }

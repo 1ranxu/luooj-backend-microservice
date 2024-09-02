@@ -7,13 +7,12 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * @author 落樱的悔恨
- * 用户
+ * 用户表
+ * @TableName user
  */
-@TableName(value = "user")
+@TableName(value ="user")
 @Data
 public class User implements Serializable {
-
     /**
      * id
      */
@@ -21,12 +20,12 @@ public class User implements Serializable {
     private Long id;
 
     /**
-     * 用户账号
+     * 账号
      */
     private String userAccount;
 
     /**
-     * 用户密码
+     * 密码
      */
     private String userPassword;
 
@@ -34,16 +33,6 @@ public class User implements Serializable {
      * 邮箱
      */
     private String email;
-
-    /**
-     * 开放平台id
-     */
-    private String unionId;
-
-    /**
-     * 公众号openId
-     */
-    private String mpOpenId;
 
     /**
      * 用户昵称
@@ -69,6 +58,11 @@ public class User implements Serializable {
      * 性别 0-男 1-女
      */
     private Integer gender;
+
+    /**
+     * 积分
+     */
+    private Long score;
 
     /**
      * 粉丝数

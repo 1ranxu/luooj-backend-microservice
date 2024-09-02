@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.luoying.luoojbackendcommon.constant.RedisKey.EMAIL_CAPTCHA_KEY;
+import static com.luoying.luoojbackendcommon.constant.RedisKey.EMAIL_CAPTCHA_KEY_TTL;
 import static com.luoying.luoojbackendcommon.constant.UserConstant.SALT;
 
 /**
@@ -144,7 +145,7 @@ public class UserController {
         // 获取验证码 存入redis
         String captcha = RandomUtil.randomNumbers(6);
         stringRedisTemplate.opsForValue()
-                .set(RedisKey.getKey(EMAIL_CAPTCHA_KEY, emailAccount), captcha, 5, TimeUnit.MINUTES);
+                .set(RedisKey.getKey(EMAIL_CAPTCHA_KEY, emailAccount), captcha, EMAIL_CAPTCHA_KEY_TTL, TimeUnit.MINUTES);
         // 发送邮件
         try {
             sendEmail(emailAccount, captcha);
@@ -220,6 +221,11 @@ public class UserController {
         // 拷贝
         User user = new User();
         BeanUtils.copyProperties(userAddRequest, user);
+        // 加密
+        if (StringUtils.isNotBlank(userAddRequest.getUserPassword())) {
+            String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userAddRequest.getUserPassword()).getBytes());
+            user.setUserPassword(encryptPassword);
+        }
         // 保存
         boolean result = userService.save(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);

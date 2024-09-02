@@ -16,9 +16,9 @@ import lombok.Data;
 @Data
 public class Follow implements Serializable {
     /**
-     * 主键
+     * 关注记录id
      */
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -29,7 +29,7 @@ public class Follow implements Serializable {
     /**
      * 粉丝id
      */
-    private Long followUserId;
+    private Long fansId;
 
     /**
      * 创建时间

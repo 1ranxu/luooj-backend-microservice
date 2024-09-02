@@ -51,13 +51,11 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
 
     @Resource
     @Lazy
-    private JudgeFeignClient judgeService;
+    private JudgeFeignClient judgeFeignClient;
 
     @Resource
     private MessageProducer messageProducer;
 
-    @Resource
-    private QuestionSubmitMapper questionSubmitMapper;
 
     /**
      * 提交题目
@@ -103,17 +101,14 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         // 设置初始状态
         questionSubmit.setStatus(QuestionSubmitStatusEnum.WAITING.getValue());
         questionSubmit.setJudgeInfo("{}");
-        // 保存到提交记录总表
+        // 保存到提交记录表
         boolean result = this.save(questionSubmit);
         if (!result) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "题目提交失败");
         }
-        // 保存到个人提交表
-        String tableName = "question_submit_" + userId;
-        int count = questionSubmitMapper.addQuestionSubmit(tableName, questionSubmit);
 
         // 发送提交记录id到消息队列
-        if(count > 0){
+        if(result){
             messageProducer.sendMessage(EXCHANGE_NAME, ROUTING_KEY, String.valueOf(questionSubmit.getId()));
         }
 
@@ -152,8 +147,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
         queryWrapper.eq(ObjectUtils.isNotEmpty(questionId), "questionId", questionId);
         queryWrapper.eq(QuestionSubmitStatusEnum.getEnumByValue(status) != null, "status", status);
-        queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
-                sortField);
+        queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
         return queryWrapper;
     }
 

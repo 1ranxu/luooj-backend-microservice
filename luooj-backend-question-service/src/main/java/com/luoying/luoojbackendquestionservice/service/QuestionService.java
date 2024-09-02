@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.luoying.luoojbackendmodel.dto.question.QuestionQueryRequest;
+import com.luoying.luoojbackendmodel.dto.question.QuestionUpdateRequest;
 import com.luoying.luoojbackendmodel.entity.Question;
 import com.luoying.luoojbackendmodel.vo.QuestionVO;
 
@@ -47,4 +48,16 @@ public interface QuestionService extends IService<Question> {
      * @param request {@link HttpServletRequest}
      */
     Page<QuestionVO> getQuestionVOPage(Page<Question> questionPage, HttpServletRequest request);
+
+    /**
+     * 根据题目id查询题目
+     * @param id 题目id
+     */
+    Question queryById(long id);
+
+    /**
+     * 更新题目
+     * @param questionUpdateRequest 题目更新请求
+     */
+    boolean update(QuestionUpdateRequest questionUpdateRequest);
 }

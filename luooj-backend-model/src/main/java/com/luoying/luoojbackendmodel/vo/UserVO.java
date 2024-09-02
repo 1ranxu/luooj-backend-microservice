@@ -13,9 +13,19 @@ import java.util.Date;
 public class UserVO implements Serializable {
 
     /**
-     * id
+     * 用户 id
      */
     private Long id;
+
+    /**
+     * 账号
+     */
+    private String userAccount;
+
+    /**
+     * 邮箱
+     */
+    private String email;
 
     /**
      * 用户昵称
@@ -38,9 +48,34 @@ public class UserVO implements Serializable {
     private String userRole;
 
     /**
+     * 性别 0-男 1-女
+     */
+    private Integer gender;
+
+    /**
+     * 积分
+     */
+    private Long score;
+
+    /**
+     * 粉丝数
+     */
+    private Long fans;
+
+    /**
+     * 关注数
+     */
+    private Long followers;
+
+    /**
      * 创建时间
      */
     private Date createTime;
+
+    /**
+     * 更新时间
+     */
+    private Date updateTime;
 
     private static final long serialVersionUID = 1L;
 }

@@ -72,24 +72,15 @@ public class MessageConsumer {
             // 设置通过数
             Long questionId = questionSubmit.getQuestionId();
             Question question = questionFeignClient.getQuestionById(questionId);
-            Question updateQuestion = new Question();
-
-            Integer acceptedNum = question.getAcceptedNum();
-            acceptedNum = acceptedNum + 1;
-            updateQuestion.setId(questionId);
-            updateQuestion.setAcceptedNum(acceptedNum);
-            boolean save = questionFeignClient.updateQuestionById(updateQuestion);
+            question.setAcceptedNum(question.getAcceptedNum() + 1);
+            boolean save = questionFeignClient.updateQuestionById(question);
             if (!save) {
-                throw new BusinessException(ErrorCode.OPERATION_ERROR, "保存数据失败");
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "设置通过数失败");
             }
-
-            // 设置个人题目通过表
-            try {
+            // 添加通过记录
+            if(questionFeignClient.getAcceptedQuestion(questionId, questionId) == null){
                 Long userId = questionSubmit.getUserId();
-                String tableName = "accepted_question_" + userId;
-                questionFeignClient.addAcceptedQuestion(tableName, questionId);
-            } catch (Exception e) {
-                log.info("该题目已通过，不用重复添加");
+                questionFeignClient.addAcceptedQuestion(questionId, userId);
             }
             // 确认消息
             channel.basicAck(deliveryTag, false);

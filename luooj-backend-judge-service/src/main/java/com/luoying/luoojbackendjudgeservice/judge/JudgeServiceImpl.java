@@ -62,20 +62,13 @@ public class JudgeServiceImpl implements JudgeService {
         if (!questionSubmit.getStatus().equals(QuestionSubmitStatusEnum.WAITING.getValue())) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "已在判题");
         }
-        // 3 更改判题（题目提交总表）的状态为 “判题中”，防止重复执行，也能让用户即时看到状态
+        // 3 更改判题（题目提交表）的状态为 “判题中”，防止重复执行，也能让用户即时看到状态
         QuestionSubmit questionSubmitUpdate = new QuestionSubmit();
         questionSubmitUpdate.setId(questionSubmitId);
         questionSubmitUpdate.setStatus(QuestionSubmitStatusEnum.RUNNING.getValue());
         boolean update = questionFeignClient.updateQuestionSubmitById(questionSubmitUpdate);
         if (!update) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "判题状态更新失败");
-        }
-        // 更改判题（题目提交个人表）的状态为 “判题中”
-        long userId = questionSubmit.getUserId();
-        String tableName = "question_submit_" + userId;
-        update = questionFeignClient.updateQuestionSubmit(tableName, questionSubmitUpdate);
-        if (!update) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "个人提交表的提交记录的判题状态更新失败");
         }
         // 4、调用沙箱，获取到执行结果
         String code = questionSubmit.getCode();
@@ -108,7 +101,7 @@ public class JudgeServiceImpl implements JudgeService {
         judgeContext.setQuestionSubmit(questionSubmit);
         // 使用判题管理进行判题
         QuestionSubmitJudgeInfo judgeInfo = judgeManager.doJudge(judgeContext);
-        // 修改提交记录总表的判题状态和判题信息
+        // 修改提交记录表的判题状态和判题信息
         questionSubmitUpdate = new QuestionSubmit();
         questionSubmitUpdate.setId(questionSubmitId);
         questionSubmitUpdate.setStatus(QuestionSubmitStatusEnum.SUCCESS.getValue());
@@ -116,11 +109,6 @@ public class JudgeServiceImpl implements JudgeService {
         update = questionFeignClient.updateQuestionSubmitById(questionSubmitUpdate);
         if (!update) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "判题状态更新失败");
-        }
-        // 修改提交记录个人表的判题状态和判题信息
-        update = questionFeignClient.updateQuestionSubmit(tableName, questionSubmitUpdate);
-        if (!update) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "个人提交表的提交记录的判题状态更新失败");
         }
         return QuestionSubmitVO.objToVo(questionFeignClient.getQuestionSubmitById(questionSubmitId));
     }

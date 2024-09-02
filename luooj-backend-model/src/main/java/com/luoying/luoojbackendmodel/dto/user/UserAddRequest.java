@@ -12,14 +12,24 @@ import java.io.Serializable;
 public class UserAddRequest implements Serializable {
 
     /**
-     * 用户昵称
-     */
-    private String userName;
-
-    /**
      * 账号
      */
     private String userAccount;
+
+    /**
+     * 密码
+     */
+    private String userPassword;
+
+    /**
+     * 邮箱
+     */
+    private String email;
+
+    /**
+     * 用户昵称
+     */
+    private String userName;
 
     /**
      * 用户头像
@@ -27,9 +37,34 @@ public class UserAddRequest implements Serializable {
     private String userAvatar;
 
     /**
-     * 用户角色: user, admin
+     * 用户简介
+     */
+    private String userProfile;
+
+    /**
+     * 用户角色：user/admin/ban
      */
     private String userRole;
+
+    /**
+     * 性别 0-男 1-女
+     */
+    private Integer gender;
+
+    /**
+     * 积分
+     */
+    private Long score;
+
+    /**
+     * 粉丝数
+     */
+    private Long fans;
+
+    /**
+     * 关注数
+     */
+    private Long followers;
 
     private static final long serialVersionUID = 1L;
 }

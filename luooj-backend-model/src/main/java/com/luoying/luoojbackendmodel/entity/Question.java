@@ -7,17 +7,17 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * @author 落樱的悔恨
- * 题目
+ * 题目表
+ *
  * @TableName question
  */
-@TableName(value ="question")
+@TableName(value = "question")
 @Data
 public class Question implements Serializable {
     /**
-     * id
+     * 题目id
      */
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -61,14 +61,19 @@ public class Question implements Serializable {
     private String judgeCase;
 
     /**
+     * 评论数
+     */
+    private Long comments;
+
+    /**
      * 点赞数
      */
-    private Integer thumbNum;
+    private Long thumbNum;
 
     /**
      * 收藏数
      */
-    private Integer favourNum;
+    private Long favourNum;
 
     /**
      * 创建用户 id
