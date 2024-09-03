@@ -8,6 +8,7 @@
         <id property="id" column="id" jdbcType="BIGINT"/>
         <result property="title" column="title" jdbcType="VARCHAR"/>
         <result property="content" column="content" jdbcType="VARCHAR"/>
+        <result property="difficulty" column="difficulty" jdbcType="TINYINT"/>
         <result property="tags" column="tags" jdbcType="VARCHAR"/>
         <result property="answer" column="answer" jdbcType="VARCHAR"/>
         <result property="submitNum" column="submitNum" jdbcType="INTEGER"/>
@@ -37,13 +38,12 @@
     </select>
 
     <sql id="Base_Column_List">
-        id
-        ,title,content,
-        tags,answer,submitNum,
-        acceptedNum,judgeConfig,judgeCase,
-        comments,thumbNum,favourNum,
-        userId,createTime,updateTime,
-        isDelete
+        id,title,content,
+        difficulty,tags,answer,
+        submitNum,acceptedNum,judgeConfig,
+        judgeCase,comments,thumbNum,
+        favourNum,userId,createTime,
+        updateTime,isDelete
     </sql>
 
 
