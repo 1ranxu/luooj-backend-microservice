@@ -9,6 +9,7 @@
             <result property="title" column="title" jdbcType="VARCHAR"/>
             <result property="startTime" column="startTime" jdbcType="TIMESTAMP"/>
             <result property="endTime" column="endTime" jdbcType="TIMESTAMP"/>
+            <result property="duration" column="duration" jdbcType="INTEGER"/>
             <result property="award" column="award" jdbcType="VARCHAR"/>
             <result property="tips" column="tips" jdbcType="VARCHAR"/>
             <result property="questions" column="questions" jdbcType="VARCHAR"/>

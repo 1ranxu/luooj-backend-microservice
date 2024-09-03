@@ -35,6 +35,11 @@ public class Contest implements Serializable {
     private Date endTime;
 
     /**
+     * 比赛时长（秒）
+     */
+    private Integer duration;
+
+    /**
      * 竞赛奖励
      */
     private String award;
