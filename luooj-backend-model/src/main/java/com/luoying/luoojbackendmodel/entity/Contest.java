@@ -55,6 +55,11 @@ public class Contest implements Serializable {
     private Long userId;
 
     /**
+     * 状态（0-待开始、1-进行中、2-已结束）
+     */
+    private Integer status;
+
+    /**
      * 创建时间
      */
     private Date createTime;

@@ -13,6 +13,7 @@
             <result property="tips" column="tips" jdbcType="VARCHAR"/>
             <result property="questions" column="questions" jdbcType="VARCHAR"/>
             <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
@@ -21,7 +22,7 @@
     <sql id="Base_Column_List">
         id,title,startTime,
         endTime,award,tips,
-        questions,userId,createTime,
-        updateTime,isDelete
+        questions,userId,status,
+        createTime,updateTime,isDelete
     </sql>
 </mapper>
