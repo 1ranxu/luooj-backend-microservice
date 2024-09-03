@@ -10,6 +10,7 @@
             <result property="userId" column="userId" jdbcType="BIGINT"/>
             <result property="title" column="title" jdbcType="VARCHAR"/>
             <result property="content" column="content" jdbcType="VARCHAR"/>
+            <result property="tags" column="tags" jdbcType="VARCHAR"/>
             <result property="likes" column="likes" jdbcType="BIGINT"/>
             <result property="comments" column="comments" jdbcType="BIGINT"/>
             <result property="favourNum" column="favourNum" jdbcType="BIGINT"/>
@@ -20,8 +21,8 @@
 
     <sql id="Base_Column_List">
         id,questionId,userId,
-        title,content,likes,
-        comments,favourNum,createTime,
-        updateTime,isDelete
+        title,content,tags,
+        likes,comments,favourNum,
+        createTime,updateTime,isDelete
     </sql>
 </mapper>

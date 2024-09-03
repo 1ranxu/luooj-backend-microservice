@@ -40,6 +40,11 @@ public class QuestionSolution implements Serializable {
     private String content;
 
     /**
+     * 标签列表（json 数组）
+     */
+    private String tags;
+
+    /**
      * 点赞数
      */
     private Long likes;
