@@ -4,6 +4,7 @@ import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.csp.sentinel.slots.block.RuleConstant;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
 import com.luoying.luoojbackendcommon.annotation.AuthCheck;
@@ -22,13 +23,16 @@ import com.luoying.luoojbackendmodel.codesanbox.RunCodeResponse;
 import com.luoying.luoojbackendmodel.dto.question.*;
 import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitAddRequest;
 import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitQueryRequest;
+import com.luoying.luoojbackendmodel.entity.AcceptedQuestion;
 import com.luoying.luoojbackendmodel.entity.Question;
 import com.luoying.luoojbackendmodel.entity.QuestionSubmit;
 import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.enums.QuestionSubmitLanguageEnum;
+import com.luoying.luoojbackendmodel.vo.AcceptedQuestionDetailVO;
 import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
 import com.luoying.luoojbackendmodel.vo.QuestionVO;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionMapper;
+import com.luoying.luoojbackendquestionservice.service.AcceptedQuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
 import com.luoying.luoojbackendserviceclient.service.JudgeFeignClient;
@@ -43,6 +47,10 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import static com.luoying.luoojbackendcommon.constant.RedisKey.ACCEPTED_QUESTION_RANK_KEY;
+import static com.luoying.luoojbackendcommon.constant.RedisKey.ACCEPTED_QUESTION_RANK_KEY_TTL;
 
 /**
  * @author 落樱的悔恨
@@ -71,6 +79,9 @@ public class QuestionController {
 
     @Resource
     private JudgeFeignClient judgeFeignClient;
+
+    @Resource
+    private AcceptedQuestionService acceptedQuestionService;
 
     private final static Gson GSON = new Gson();
 
@@ -503,5 +514,72 @@ public class QuestionController {
         return ResultUtils.success(question.getId());
     }
 
-
+    /**
+     * 获取用户通过题目的详情
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/get/acceptedQuestion/detail")
+    public BaseResponse<AcceptedQuestionDetailVO> getAcceptedQuestionDetail(HttpServletRequest request) {
+        // 1.获取登录用户的id
+        User loginUser = userFeignClient.getLoginUser(request);
+        Long userId = loginUser.getId();
+        AcceptedQuestionDetailVO acceptedQuestionDetailVO = new AcceptedQuestionDetailVO();
+        // 2.填充通过题目总数
+        LambdaQueryWrapper<AcceptedQuestion> queryWrapper1 = new LambdaQueryWrapper<>();
+        queryWrapper1.eq(Objects.nonNull(userId), AcceptedQuestion::getUserId, userId);
+        List<AcceptedQuestion> acceptedQuestionList = acceptedQuestionService.list(queryWrapper1);
+        acceptedQuestionDetailVO.setPassTotalNum(acceptedQuestionList.size());
+        // 3.填充各难度的通过数
+        List<Long> questionIds = acceptedQuestionList.stream().map(acceptedQuestion -> acceptedQuestion.getQuestionId()).collect(Collectors.toList());
+        List<Question> questionList1 = questionService.listByIds(questionIds);
+        Map<Integer, List<Question>> difficultyMap1 = questionList1.stream().collect(Collectors.groupingBy(Question::getDifficulty));
+        HashMap<Integer, Integer> eachDifficultyPassNum = new HashMap<>();
+        eachDifficultyPassNum.put(0, 0);
+        eachDifficultyPassNum.put(1, 0);
+        eachDifficultyPassNum.put(2, 0);
+        for (Integer difficulty : difficultyMap1.keySet()) {
+            eachDifficultyPassNum.put(difficulty, difficultyMap1.get(difficulty).size());
+        }
+        acceptedQuestionDetailVO.setEachDifficultyPassNum(eachDifficultyPassNum);
+        // 4.填充题目总数
+        List<Question> questionList2 = questionService.list();
+        acceptedQuestionDetailVO.setQuestionTotalNum(questionList2.size());
+        // 5.填充各难度的题目数
+        Map<Integer, List<Question>> difficultyMap2 = questionList2.stream().collect(Collectors.groupingBy(Question::getDifficulty));
+        HashMap<Integer, Integer> eachDifficultyQuestionNum = new HashMap<>();
+        eachDifficultyQuestionNum.put(0, 0);
+        eachDifficultyQuestionNum.put(1, 0);
+        eachDifficultyQuestionNum.put(2, 0);
+        for (Integer difficulty : difficultyMap2.keySet()) {
+            eachDifficultyQuestionNum.put(difficulty, difficultyMap2.get(difficulty).size());
+        }
+        acceptedQuestionDetailVO.setEachDifficultyQuestionNum(eachDifficultyQuestionNum);
+        // 6.填充总提交通过率
+        LambdaQueryWrapper<QuestionSubmit> queryWrapper2 = new LambdaQueryWrapper<>();
+        queryWrapper2.eq(Objects.nonNull(userId), QuestionSubmit::getUserId, userId);
+        List<QuestionSubmit> questionSubmitList = questionSubmitService.list(queryWrapper2);
+        acceptedQuestionDetailVO.setSubmissionPassRate(acceptedQuestionList.size() * 1.0 / questionSubmitList.size());
+        // 7.填充各难度的提交通过率
+        Map<Long, List<QuestionSubmit>> collect = questionSubmitList.stream().collect(Collectors.groupingBy(QuestionSubmit::getQuestionId));
+        HashMap<Integer, Double> eachDifficultysubmissionPassRate = new HashMap<>();
+        eachDifficultysubmissionPassRate.put(0, 0.0);
+        eachDifficultysubmissionPassRate.put(1, 0.0);
+        eachDifficultysubmissionPassRate.put(2, 0.0);
+        // 统计各难度题目的提交总数
+        HashMap<Integer, Integer> eachDifficultysubmissionNum = new HashMap<>();
+        for (Long questionId : collect.keySet()) {
+            Question question = questionService.getById(questionId);
+            Integer difficulty = question.getDifficulty();
+            eachDifficultysubmissionNum.put(difficulty, eachDifficultysubmissionNum.getOrDefault(difficulty, 0) + collect.get(questionId).size());
+        }
+        for (Integer difficulty : eachDifficultyPassNum.keySet()) {
+            if (eachDifficultysubmissionNum.get(difficulty) == null) continue;
+            eachDifficultysubmissionPassRate.put(difficulty, eachDifficultyPassNum.get(difficulty) * 1.0 /
+                    eachDifficultysubmissionNum.get(difficulty));
+        }
+        acceptedQuestionDetailVO.setEachDifficultysubmissionPassRate(eachDifficultysubmissionPassRate);
+        return ResultUtils.success(acceptedQuestionDetailVO);
+    }
 }
