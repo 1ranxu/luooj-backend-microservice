@@ -35,6 +35,12 @@ public class RedisKey {
     public static final String SINGLE_USER_QUESTION_SUBMIT_KEY = "question_service:question_submit_user:%s";
     public static final long SINGLE_USER_QUESTION_SUBMIT_KEY_TTL = 5L;
 
+    /**
+     * 通过题目数排名的key和过期时间
+     */
+    public static final String ACCEPTED_QUESTION_RANK_KEY = "question_service:accepted_question_rank";
+    public static final long ACCEPTED_QUESTION_RANK_KEY_TTL = 30L;
+
 
 
     public static String getKey(String key, Object... o) {

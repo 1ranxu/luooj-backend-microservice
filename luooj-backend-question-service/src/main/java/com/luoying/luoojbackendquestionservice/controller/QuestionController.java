@@ -582,4 +582,26 @@ public class QuestionController {
         acceptedQuestionDetailVO.setEachDifficultysubmissionPassRate(eachDifficultysubmissionPassRate);
         return ResultUtils.success(acceptedQuestionDetailVO);
     }
+    /**
+     * 获取用户的排名（刷题数量）
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/get/acceptedQuestion/ranking")
+    public BaseResponse<Long> getAcceptedQuestionRanking(HttpServletRequest request) {
+        User loginUser = userFeignClient.getLoginUser(request);
+        // 查询缓存
+        Long userId = loginUser.getId();
+        Long rank = stringRedisTemplate.opsForZSet().rank(ACCEPTED_QUESTION_RANK_KEY, userId.toString());
+        if (rank != null) return ResultUtils.success(rank + 1);
+        // 未查到，构建缓存
+        LambdaQueryWrapper<AcceptedQuestion> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AcceptedQuestion::getUserId, userId);
+        List<AcceptedQuestion> acceptedQuestionList = acceptedQuestionService.list(queryWrapper);
+        stringRedisTemplate.opsForZSet().add(ACCEPTED_QUESTION_RANK_KEY, userId + "", acceptedQuestionList.size() * 1.0);
+        stringRedisTemplate.expire(ACCEPTED_QUESTION_RANK_KEY,ACCEPTED_QUESTION_RANK_KEY_TTL,TimeUnit.MINUTES);
+        rank = stringRedisTemplate.opsForZSet().rank(ACCEPTED_QUESTION_RANK_KEY, userId.toString());
+        return ResultUtils.success(rank + 1);
+    }
 }
