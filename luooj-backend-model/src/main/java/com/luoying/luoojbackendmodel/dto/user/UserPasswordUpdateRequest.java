@@ -11,11 +11,6 @@ import java.io.Serializable;
 @Data
 public class UserPasswordUpdateRequest implements Serializable {
     /**
-     * 原密码
-     */
-    private String originPassword;
-
-    /**
      * 新密码
      */
     private String newPassword;
@@ -24,6 +19,12 @@ public class UserPasswordUpdateRequest implements Serializable {
      * 确认密码
      */
     private String checkPassword;
+
+
+    /**
+     * 验证码
+     */
+    private String captcha;
 
     private static final long serialVersionUID = 1L;
 }

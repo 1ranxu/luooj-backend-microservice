@@ -1,8 +1,5 @@
 package com.luoying.luoojbackenduserservice.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.RandomUtil;
-import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -18,7 +15,6 @@ import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.enums.UserRoleEnum;
 import com.luoying.luoojbackendmodel.vo.LoginUserVO;
 import com.luoying.luoojbackendmodel.vo.UserVO;
-import com.luoying.luoojbackendserviceclient.service.QuestionFeignClient;
 import com.luoying.luoojbackenduserservice.mapper.UserMapper;
 import com.luoying.luoojbackenduserservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +33,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.luoying.luoojbackendcommon.constant.RedisKey.EMAIL_CAPTCHA_KEY;
+import static com.luoying.luoojbackendcommon.constant.RedisKey.UPDATE_PASSWORD_EMAIL_CAPTCHA_KEY;
 import static com.luoying.luoojbackendcommon.constant.UserConstant.SALT;
 import static com.luoying.luoojbackendcommon.constant.UserConstant.USER_LOGIN_STATE;
 
@@ -52,6 +49,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     /**
      * 注册
+     *
      * @param userRegisterRequest 用户注册请求
      */
     @Override
@@ -103,6 +101,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     /**
      * 登录
+     *
      * @param userLoginRequest 用户登录请求
      * @param request          {@link HttpServletRequest}
      */
@@ -282,6 +281,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     /**
      * 获取脱敏的已登录用户信息
+     *
      * @param user 用户信息
      * @return 脱敏的用户信息
      */
@@ -312,7 +312,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
-     *
      * @param userQueryRequest 用户查询请求
      * @return
      */
@@ -337,7 +336,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
 
     /**
-     *
      * @param userList 用户集合
      */
     @Override
@@ -349,7 +347,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
-     *
      * @param request {@link HttpServletRequest}
      */
     @Override
@@ -361,7 +358,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
-     *
      * @param user 用户信息
      */
     @Override
@@ -460,6 +456,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     /**
      * 用户修改密码
+     *
      * @param userPasswordUpdateRequest
      * @param request
      * @return
@@ -469,24 +466,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (userPasswordUpdateRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        // 获取登录用户以及密码
+        // 获取登录用户
         User loginUser = this.getLoginUser(request);
-        User originuser = this.getById(loginUser.getId());
-        String userPassword = originuser.getUserPassword();
         // 获取前端参数
-        String originPassword = userPasswordUpdateRequest.getOriginPassword();
         String newPassword = userPasswordUpdateRequest.getNewPassword();
         String checkPassword = userPasswordUpdateRequest.getCheckPassword();
+        String captcha = userPasswordUpdateRequest.getCaptcha();
         // 判空
-        if (StringUtils.isAnyBlank(originPassword, newPassword, checkPassword)) {
+        if (StringUtils.isAnyBlank(newPassword, checkPassword, captcha)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
-        // 判断原密码是否正确
-        String encryptPassword = DigestUtils.md5DigestAsHex((SALT + originPassword).getBytes());
-        if(!userPassword.equals(encryptPassword)){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "原密码错误");
-        }
-        // 校验密码长度
+        // 校验新密码长度
         if (newPassword.length() < 8 || checkPassword.length() < 8 || newPassword.length() > 16 || checkPassword.length() > 16) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码长度介于8~16位");
         }
@@ -499,14 +489,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!newPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
         }
+        // 校验验证码
+        String cacheCaptcha = stringRedisTemplate.opsForValue().get(RedisKey.getKey(UPDATE_PASSWORD_EMAIL_CAPTCHA_KEY, loginUser.getEmail()));
+        if (StringUtils.isBlank(cacheCaptcha)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证码已过期,请重新获取");
+        }
+        captcha = captcha.trim();
+        if (!cacheCaptcha.equals(captcha)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "验证码输入有误");
+        }
         // 密码加密
-        encryptPassword = DigestUtils.md5DigestAsHex((SALT + newPassword).getBytes());
+        String encryptPassword = DigestUtils.md5DigestAsHex((SALT + newPassword).getBytes());
         // 保存到数据库
         User user = new User();
         user.setId(loginUser.getId());
         user.setUserPassword(encryptPassword);
         return this.updateById(user);
     }
-
-
 }

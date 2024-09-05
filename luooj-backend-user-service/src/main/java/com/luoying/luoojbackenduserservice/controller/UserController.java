@@ -31,8 +31,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.luoying.luoojbackendcommon.constant.RedisKey.EMAIL_CAPTCHA_KEY;
-import static com.luoying.luoojbackendcommon.constant.RedisKey.EMAIL_CAPTCHA_KEY_TTL;
+import static com.luoying.luoojbackendcommon.constant.EmailConstant.*;
+import static com.luoying.luoojbackendcommon.constant.RedisKey.*;
 import static com.luoying.luoojbackendcommon.constant.UserConstant.SALT;
 
 /**
@@ -124,7 +124,7 @@ public class UserController {
         // 邮箱账号登录
         LoginUserVO user = userService.userEmailLogin(userEmailLoginRequest, request);
         // redis删除验证码缓存
-        stringRedisTemplate.delete(RedisKey.getKey(EMAIL_CAPTCHA_KEY, userEmailLoginRequest.getEmailAccount()));
+        stringRedisTemplate.delete(RedisKey.getKey(LOGIN_EMAIL_CAPTCHA_KEY, userEmailLoginRequest.getEmailAccount()));
         return ResultUtils.success(user);
     }
 
@@ -134,7 +134,7 @@ public class UserController {
      * @param emailAccount 邮箱账号
      */
     @GetMapping("/getCaptcha")
-    public BaseResponse<Boolean> getCaptcha(@RequestParam("emailAccount") String emailAccount) {
+    public BaseResponse<Boolean> getCaptcha(@RequestParam("emailAccount") String emailAccount, @RequestParam("op") String op) {
         if (StringUtils.isBlank(emailAccount)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -142,10 +142,29 @@ public class UserController {
         if (!emailAccount.matches(regex)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "无效的邮箱地址");
         }
+        String key = "";
+        long ttl = 0;
+        switch (op){
+            case REGISTER:
+                key = RedisKey.getKey(REGISTER_EMAIL_CAPTCHA_KEY, emailAccount);
+                ttl = REGISTER_EMAIL_CAPTCHA_KEY_TTL;
+                break;
+            case LOGIN:
+                key = RedisKey.getKey(LOGIN_EMAIL_CAPTCHA_KEY, emailAccount);
+                ttl = LOGIN_EMAIL_CAPTCHA_KEY_TTL;
+                break;
+            case UPDATE_PASSWORD:
+                key = RedisKey.getKey(UPDATE_PASSWORD_EMAIL_CAPTCHA_KEY, emailAccount);
+                ttl = UPDATE_PASSWORD_EMAIL_CAPTCHA_KEY_TTL;
+                break;
+            case UPDATE_EMAIL:
+                key = RedisKey.getKey(UPDATE_EMAIL_EMAIL_CAPTCHA_KEY, emailAccount);
+                ttl = UPDATE_EMAIL_EMAIL_CAPTCHA_KEY_TTL;
+                break;
+        }
         // 获取验证码 存入redis
         String captcha = RandomUtil.randomNumbers(6);
-        stringRedisTemplate.opsForValue()
-                .set(RedisKey.getKey(EMAIL_CAPTCHA_KEY, emailAccount), captcha, EMAIL_CAPTCHA_KEY_TTL, TimeUnit.MINUTES);
+        stringRedisTemplate.opsForValue().set(key, captcha, ttl, TimeUnit.MINUTES);
         // 发送邮件
         try {
             sendEmail(emailAccount, captcha);
