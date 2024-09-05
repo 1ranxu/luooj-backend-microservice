@@ -1,8 +1,11 @@
 package com.luoying.luoojbackenduserservice.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.luoying.luoojbackendcommon.constant.RedisKey;
+import com.luoying.luoojbackendmodel.dto.follow.FansQueryRequest;
+import com.luoying.luoojbackendmodel.dto.follow.FollowQueryRequest;
 import com.luoying.luoojbackendmodel.entity.Follow;
 import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.vo.UserVO;
@@ -113,6 +116,86 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow>
         return intersect.stream().map(s -> userService.getUserVO(userService.getById(Long.valueOf(s)))).collect(Collectors.toList());
     }
 
+    /**
+     * 获取当前登录用户的关注列表
+     * @param followQueryRequest
+     * @param request
+     * @return
+     */
+    @Override
+    public Page<UserVO> getFollowPage(FollowQueryRequest followQueryRequest, HttpServletRequest request) {
+        // 1.获取登录用户id
+        User loginUser = userService.getLoginUser(request);
+        // 2.select * from follow WHERE fansId = x ORDER BY id ASC LIMIT 0,10;
+        LambdaQueryWrapper<Follow> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Follow::getFansId, loginUser.getId());
+        wrapper.orderByAsc(Follow::getId);
+        long current = followQueryRequest.getCurrent();
+        long pageSize = followQueryRequest.getPageSize();
+        Page<Follow> page = this.page(new Page<>(current, pageSize), wrapper);
+        List<Long> followIdList = page.getRecords().stream().map(follow -> follow.getUserId()).collect(Collectors.toList());
+        // 3.返回
+        Page<UserVO> resultPage = new Page<>();
+        if(followIdList == null || followIdList.size() == 0){
+            resultPage.setTotal(page.getTotal());
+            resultPage.setRecords(Collections.emptyList());
+            resultPage.setCurrent(current);
+            resultPage.setSize(pageSize);
+        }else{
+            List<User> userList = userService.listByIds(followIdList);
+            List<UserVO> userVOList = userList.stream().map(user -> userService.getUserVO(user)).collect(Collectors.toList());
+            resultPage.setTotal(page.getTotal());
+            resultPage.setRecords(userVOList);
+            resultPage.setCurrent(current);
+            resultPage.setSize(pageSize);
+        }
+        return resultPage;
+    }
+
+    /**
+     * 获取当前登录用户的粉丝列表
+     * @param fansQueryRequest
+     * @param request
+     * @return
+     */
+    @Override
+    public Page<UserVO> getFansPage(FansQueryRequest fansQueryRequest, HttpServletRequest request) {
+        // 1.获取登录用户id
+        User loginUser = userService.getLoginUser(request);
+        // 2.select * from follow WHERE userId = x ORDER BY id ASC LIMIT 0,10;
+        LambdaQueryWrapper<Follow> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Follow::getUserId, loginUser.getId());
+        wrapper.orderByAsc(Follow::getId);
+        long current = fansQueryRequest.getCurrent();
+        long pageSize = fansQueryRequest.getPageSize();
+        Page<Follow> page = this.page(new Page<>(current, pageSize), wrapper);
+        List<Long> fansIdList = page.getRecords().stream().map(follow -> follow.getFansId()).collect(Collectors.toList());
+        // 3.返回
+
+        Page<UserVO> resultPage = new Page<>();
+        if(fansIdList == null || fansIdList.size() == 0){
+            resultPage.setTotal(page.getTotal());
+            resultPage.setRecords(Collections.emptyList());
+            resultPage.setCurrent(current);
+            resultPage.setSize(pageSize);
+        }else{
+            List<User> userList = userService.listByIds(fansIdList);
+            List<UserVO> userVOList = userList.stream().map(user -> userService.getUserVO(user)).collect(Collectors.toList());
+            resultPage.setTotal(page.getTotal());
+            resultPage.setRecords(userVOList);
+            resultPage.setCurrent(current);
+            resultPage.setSize(pageSize);
+        }
+        return resultPage;
+    }
+
+    /**
+     * 关注/取关时更新用户的粉丝和关注数
+     *
+     * @param fansId
+     * @param userId
+     * @param isFollow
+     */
     public void updateFansAanFollowers(Long fansId, Long userId, Boolean isFollow) {
         User fans = userService.getById(fansId);
         User user = userService.getById(userId);
@@ -126,6 +209,8 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow>
         userService.updateById(fans);
         userService.updateById(user);
     }
+
+
 }
 
 

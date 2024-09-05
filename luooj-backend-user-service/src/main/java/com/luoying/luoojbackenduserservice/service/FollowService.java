@@ -1,6 +1,9 @@
 package com.luoying.luoojbackenduserservice.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.luoying.luoojbackendmodel.dto.follow.FansQueryRequest;
+import com.luoying.luoojbackendmodel.dto.follow.FollowQueryRequest;
 import com.luoying.luoojbackendmodel.entity.Follow;
 import com.luoying.luoojbackendmodel.vo.UserVO;
 
@@ -40,4 +43,20 @@ public interface FollowService extends IService<Follow> {
      * @return
      */
     List<UserVO> common(Long userId, HttpServletRequest request);
+
+    /**
+     * 获取当前登录用户的关注列表
+     * @param followQueryRequest
+     * @param request
+     * @return
+     */
+    Page<UserVO> getFollowPage(FollowQueryRequest followQueryRequest, HttpServletRequest request);
+
+    /**
+     * 获取当前登录用户的粉丝列表
+     * @param fansQueryRequest
+     * @param request
+     * @return
+     */
+    Page<UserVO> getFansPage(FansQueryRequest fansQueryRequest, HttpServletRequest request);
 }
