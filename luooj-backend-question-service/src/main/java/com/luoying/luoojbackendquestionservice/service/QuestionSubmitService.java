@@ -4,10 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitAddRequest;
+import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitDetail;
 import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitQueryRequest;
 import com.luoying.luoojbackendmodel.entity.QuestionSubmit;
 import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
+
+import javax.servlet.http.HttpServletRequest;
 
 
 /**
@@ -49,4 +52,10 @@ public interface QuestionSubmitService extends IService<QuestionSubmit> {
      */
     Page<QuestionSubmitVO> getQuestionSubmitVOPage(Page<QuestionSubmit> questionSubmitPage, User loginUser);
 
+    /**
+     * 获取个人提交详情
+     * @param request
+     * @return
+     */
+    QuestionSubmitDetail getPersonSubmitDetail(HttpServletRequest request);
 }

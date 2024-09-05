@@ -2,12 +2,14 @@ package com.luoying.luoojbackendmodel.dto.questionsubmit;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * @author 落樱的悔恨
  * 题目提交创建请求
  */
 @Data
-public class QuestionSubmitAddRequest {
+public class QuestionSubmitAddRequest implements Serializable {
     /**
      * 编程语言
      */

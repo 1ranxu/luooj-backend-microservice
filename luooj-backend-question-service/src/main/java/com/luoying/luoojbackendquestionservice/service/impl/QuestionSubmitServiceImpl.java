@@ -1,5 +1,6 @@
 package com.luoying.luoojbackendquestionservice.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -8,6 +9,7 @@ import com.luoying.luoojbackendcommon.constant.CommonConstant;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
 import com.luoying.luoojbackendcommon.utils.SqlUtils;
 import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitAddRequest;
+import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitDetail;
 import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitQueryRequest;
 import com.luoying.luoojbackendmodel.entity.Question;
 import com.luoying.luoojbackendmodel.entity.QuestionSubmit;
@@ -28,9 +30,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import javax.servlet.http.HttpServletRequest;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -59,8 +62,9 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
 
     /**
      * 提交题目
+     *
      * @param questionSubmitAddRequest 题目提交创建请求
-     * @param loginUser 登录用户
+     * @param loginUser                登录用户
      * @return 提交记录id
      */
     @Override
@@ -108,7 +112,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         }
 
         // 发送提交记录id到消息队列
-        if(result){
+        if (result) {
             messageProducer.sendMessage(EXCHANGE_NAME, ROUTING_KEY, String.valueOf(questionSubmit.getId()));
         }
 
@@ -153,8 +157,9 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
 
     /**
      * 获取封装后的题目提交
+     *
      * @param questionSubmit 题目提交
-     * @param loginUser 登录用户
+     * @param loginUser      登录用户
      */
     @Override
     public QuestionSubmitVO getQuestionSubmitVO(QuestionSubmit questionSubmit, User loginUser) {
@@ -169,8 +174,9 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
 
     /**
      * 分页获取封装后的题目提交
+     *
      * @param questionSubmitPage {@link Page<QuestionSubmit>}
-     * @param loginUser 登录用户
+     * @param loginUser          登录用户
      */
     @Override
     public Page<QuestionSubmitVO> getQuestionSubmitVOPage(Page<QuestionSubmit> questionSubmitPage,
@@ -212,8 +218,59 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         questionSubmitVOPage.setRecords(questionSubmitVOList);
         return questionSubmitVOPage;
     }
+
+    /**
+     * 获取个人提交详情
+     * @param request
+     * @return
+     */
+    @Override
+    public QuestionSubmitDetail getPersonSubmitDetail(HttpServletRequest request) {
+        QuestionSubmitDetail questionSubmitDetail = new QuestionSubmitDetail();
+        // 1.获取登录用户id
+        User loginUser = userFeighClient.getLoginUser(request);
+        // 2.根据年份分组
+        LambdaQueryWrapper<QuestionSubmit> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(QuestionSubmit::getUserId, loginUser.getId());
+        wrapper.select(QuestionSubmit::getYear, QuestionSubmit::getCount);
+        wrapper.groupBy(QuestionSubmit::getYear);
+        List<QuestionSubmit> questionSubmitList = this.list(wrapper);
+        HashMap<String, Integer> years = new HashMap<>();
+        for (QuestionSubmit questionSubmit : questionSubmitList) {
+            years.put(questionSubmit.getYear().toString(), questionSubmit.getCount());
+        }
+        questionSubmitDetail.setYears(years);
+        // 3.根据日分组
+        wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(QuestionSubmit::getUserId, loginUser.getId());
+        wrapper.select(QuestionSubmit::getDay, QuestionSubmit::getCount);
+        wrapper.groupBy(QuestionSubmit::getDay);
+        questionSubmitList = this.list(wrapper);
+        HashMap<String, Integer> submitDetail = new HashMap<>();
+        SimpleDateFormat originalFormat = new SimpleDateFormat("yyyyMMdd");
+        SimpleDateFormat targetFormat = new SimpleDateFormat("yyyy-MM-dd");
+        for (QuestionSubmit questionSubmit : questionSubmitList) {
+            String formattedDateStr = null;
+            try {
+                Date date = originalFormat.parse(questionSubmit.getDay().toString());
+                formattedDateStr = targetFormat.format(date);
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+            submitDetail.put(formattedDateStr, questionSubmit.getCount());
+        }
+        questionSubmitDetail.setSubmitDetail(submitDetail);
+        // 4.查询一年提交了多少天
+        wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(QuestionSubmit::getUserId, loginUser.getId());
+        wrapper.select(QuestionSubmit::getYear, QuestionSubmit::getCountDay);
+        wrapper.groupBy(QuestionSubmit::getYear);
+        questionSubmitList = this.list(wrapper);
+        HashMap<String, Integer> dayNum = new HashMap<>();
+        for (QuestionSubmit questionSubmit : questionSubmitList) {
+            dayNum.put(questionSubmit.getYear().toString(), questionSubmit.getCountDay());
+        }
+        questionSubmitDetail.setDayNum(dayNum);
+        return questionSubmitDetail;
+    }
 }
-
-
-
-

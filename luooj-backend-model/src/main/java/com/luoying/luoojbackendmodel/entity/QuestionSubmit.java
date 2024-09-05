@@ -11,7 +11,7 @@ import java.util.Date;
  * 题目提交记录
  * @TableName question_submit
  */
-@TableName(value ="question_submit")
+@TableName(value = "question_submit")
 @Data
 public class QuestionSubmit implements Serializable {
     /**
@@ -65,6 +65,18 @@ public class QuestionSubmit implements Serializable {
      */
     @TableLogic
     private Integer isDelete;
+
+    @TableField(value = "COUNT(*)", insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER)
+    private Integer count;
+
+    @TableField(value = "COUNT(DISTINCT DATE(createTime))", insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER)
+    private Integer countDay;
+
+    @TableField(value = "DATE_FORMAT(createTime, '%Y')", insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER)
+    private Integer year;
+
+    @TableField(value = "DATE_FORMAT(createTime, '%Y%m%d')", insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER)
+    private Integer day;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
