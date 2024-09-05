@@ -257,7 +257,6 @@ public class UserController {
      * @param request           {@link HttpServletRequest}
      */
     @PostMapping("/update")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
                                             HttpServletRequest request) {
         // 校验
@@ -281,6 +280,19 @@ public class UserController {
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 用户修改密码
+     *
+     * @param userPasswordUpdateRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/update/password")
+    public BaseResponse<Boolean> updateUserPassword(@RequestBody UserPasswordUpdateRequest userPasswordUpdateRequest,
+                                                    HttpServletRequest request) {
+        return ResultUtils.success(userService.updateUserPassword(userPasswordUpdateRequest, request));
     }
 
     /**

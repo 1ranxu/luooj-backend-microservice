@@ -458,5 +458,55 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return getUserVO(loginUser);
     }
 
+    /**
+     * 用户修改密码
+     * @param userPasswordUpdateRequest
+     * @param request
+     * @return
+     */
+    @Override
+    public Boolean updateUserPassword(UserPasswordUpdateRequest userPasswordUpdateRequest, HttpServletRequest request) {
+        if (userPasswordUpdateRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 获取登录用户以及密码
+        User loginUser = this.getLoginUser(request);
+        User originuser = this.getById(loginUser.getId());
+        String userPassword = originuser.getUserPassword();
+        // 获取前端参数
+        String originPassword = userPasswordUpdateRequest.getOriginPassword();
+        String newPassword = userPasswordUpdateRequest.getNewPassword();
+        String checkPassword = userPasswordUpdateRequest.getCheckPassword();
+        // 判空
+        if (StringUtils.isAnyBlank(originPassword, newPassword, checkPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
+        }
+        // 判断原密码是否正确
+        String encryptPassword = DigestUtils.md5DigestAsHex((SALT + originPassword).getBytes());
+        if(!userPassword.equals(encryptPassword)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "原密码错误");
+        }
+        // 校验密码长度
+        if (newPassword.length() < 8 || checkPassword.length() < 8 || newPassword.length() > 16 || checkPassword.length() > 16) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码长度介于8~16位");
+        }
+        // 密码只能由英文字母大小写、数字组成
+        String regex = "^[a-zA-Z0-9]+$";
+        if (!newPassword.matches(regex) || !checkPassword.matches(regex)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码只能由英文字母大小写、数字组成");
+        }
+        // 判断新密码和校验密码是否一致
+        if (!newPassword.equals(checkPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
+        }
+        // 密码加密
+        encryptPassword = DigestUtils.md5DigestAsHex((SALT + newPassword).getBytes());
+        // 保存到数据库
+        User user = new User();
+        user.setId(loginUser.getId());
+        user.setUserPassword(encryptPassword);
+        return this.updateById(user);
+    }
+
 
 }

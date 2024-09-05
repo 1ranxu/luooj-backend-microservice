@@ -115,4 +115,13 @@ public interface UserService extends IService<User> {
      * 解除邮箱绑定
      */
     UserVO userUnBindEmail(UserUnBindEmailRequest userUnBindEmailRequest, User loginUser);
+
+    /**
+     * 用户修改密码
+     * @param userPasswordUpdateRequest
+     * @param request
+     * @return
+     */
+    Boolean updateUserPassword(UserPasswordUpdateRequest userPasswordUpdateRequest, HttpServletRequest request);
+
 }
