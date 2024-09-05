@@ -8,10 +8,7 @@ import com.luoying.luoojbackendmodel.dto.follow.FollowQueryRequest;
 import com.luoying.luoojbackendmodel.vo.UserVO;
 import com.luoying.luoojbackenduserservice.service.FollowService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -74,7 +71,7 @@ public class FollowController {
      * @return
      */
     @GetMapping("/get/follow/page")
-    public BaseResponse<Page<UserVO>> getFollowPage(FollowQueryRequest followQueryRequest, HttpServletRequest request) {
+    public BaseResponse<Page<UserVO>> getFollowPage(@RequestBody FollowQueryRequest followQueryRequest, HttpServletRequest request) {
         return ResultUtils.success(followService.getFollowPage(followQueryRequest, request));
     }
 
@@ -85,7 +82,7 @@ public class FollowController {
      * @return
      */
     @GetMapping("/get/fans/page")
-    public BaseResponse<Page<UserVO>> getFansPage(FansQueryRequest fansQueryRequest, HttpServletRequest request) {
+    public BaseResponse<Page<UserVO>> getFansPage(@RequestBody FansQueryRequest fansQueryRequest, HttpServletRequest request) {
         return ResultUtils.success(followService.getFansPage(fansQueryRequest, request));
     }
 
