@@ -1,4 +1,4 @@
-package com.luoying.luoojbackendmodel.dto.questionsubmit;
+package com.luoying.luoojbackendmodel.dto.question_submit;
 
 import lombok.Data;
 

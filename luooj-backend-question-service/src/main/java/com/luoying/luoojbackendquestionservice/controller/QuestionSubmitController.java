@@ -2,7 +2,7 @@ package com.luoying.luoojbackendquestionservice.controller;
 
 import com.luoying.luoojbackendcommon.common.BaseResponse;
 import com.luoying.luoojbackendcommon.common.ResultUtils;
-import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitDetail;
+import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitDetail;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;

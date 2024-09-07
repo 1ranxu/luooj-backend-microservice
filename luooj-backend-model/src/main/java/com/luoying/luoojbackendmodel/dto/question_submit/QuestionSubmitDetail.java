@@ -1,11 +1,9 @@
-package com.luoying.luoojbackendmodel.dto.questionsubmit;
+package com.luoying.luoojbackendmodel.dto.question_submit;
 
 import lombok.Data;
-import org.redisson.misc.Hash;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.List;
 
 /**
  * 个人提交详情

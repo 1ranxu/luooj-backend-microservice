@@ -1,6 +1,6 @@
 package com.luoying.luoojbackendmodel.codesanbox;
 
-import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitJudgeInfo;
+import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitJudgeInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

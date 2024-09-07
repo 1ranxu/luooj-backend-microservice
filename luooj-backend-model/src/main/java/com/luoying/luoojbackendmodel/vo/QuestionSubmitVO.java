@@ -2,7 +2,7 @@ package com.luoying.luoojbackendmodel.vo;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitJudgeInfo;
+import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitJudgeInfo;
 import com.luoying.luoojbackendmodel.entity.QuestionSubmit;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;

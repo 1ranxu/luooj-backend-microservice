@@ -5,7 +5,7 @@ import com.luoying.luoojbackendjudgeservice.judge.strategy.JudgeContext;
 import com.luoying.luoojbackendjudgeservice.judge.strategy.JudgeStrategy;
 import com.luoying.luoojbackendmodel.dto.question.QuestionJudgeCase;
 import com.luoying.luoojbackendmodel.dto.question.QuestionJudgeCconfig;
-import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitJudgeInfo;
+import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitJudgeInfo;
 import com.luoying.luoojbackendmodel.entity.Question;
 import com.luoying.luoojbackendmodel.enums.JudgeInfoMessagenum;
 

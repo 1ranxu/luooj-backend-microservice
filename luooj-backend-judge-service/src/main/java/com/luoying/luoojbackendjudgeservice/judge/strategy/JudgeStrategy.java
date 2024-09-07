@@ -1,7 +1,7 @@
 package com.luoying.luoojbackendjudgeservice.judge.strategy;
 
 
-import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitJudgeInfo;
+import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitJudgeInfo;
 
 /**
  * @author 落樱的悔恨

@@ -2,7 +2,7 @@ package com.luoying.luoojbackendjudgeservice.judge.strategy;
 
 import com.luoying.luoojbackendjudgeservice.judge.strategy.impl.DefaultJudgeStrategy;
 import com.luoying.luoojbackendjudgeservice.judge.strategy.impl.JavaJudgeStrategy;
-import com.luoying.luoojbackendmodel.dto.questionsubmit.QuestionSubmitJudgeInfo;
+import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitJudgeInfo;
 import com.luoying.luoojbackendmodel.entity.QuestionSubmit;
 import org.springframework.stereotype.Service;
 
