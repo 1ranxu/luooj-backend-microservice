@@ -10,7 +10,7 @@ import com.luoying.luoojbackendfileservice.manager.CosManager;
 import com.luoying.luoojbackendmodel.dto.file.UploadFileRequest;
 import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.enums.FileUploadBizEnum;
-import com.luoying.luoojbackendserviceclient.service.UserFeighClient;
+import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,7 +35,7 @@ public class FileController {
     final long ONE_M = 1024 * 1024L;
 
     @Resource
-    private UserFeighClient userFeighClient;
+    private UserFeignClient userFeignClient;
 
     @Resource
     private CosManager cosManager;
@@ -60,7 +60,7 @@ public class FileController {
         // 判断文件大小和类型是否合规
         validFile(multipartFile, fileUploadBizEnum);
         // 获取登录用户
-        User loginUser = this.userFeighClient.getLoginUser(request);
+        User loginUser = this.userFeignClient.getLoginUser(request);
         // 文件目录：业务/用户/文件名
         String uuid = RandomStringUtils.randomAlphanumeric(8);
         String filename = uuid + "-" + multipartFile.getOriginalFilename();

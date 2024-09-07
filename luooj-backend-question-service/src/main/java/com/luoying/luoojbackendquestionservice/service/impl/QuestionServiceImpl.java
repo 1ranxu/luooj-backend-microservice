@@ -25,11 +25,10 @@ import com.luoying.luoojbackendmodel.entity.Question;
 import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.vo.QuestionVO;
 import com.luoying.luoojbackendmodel.vo.UserVO;
-import com.luoying.luoojbackendquestionservice.mapper.AcceptedQuestionMapper;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionMapper;
 import com.luoying.luoojbackendquestionservice.service.AcceptedQuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
-import com.luoying.luoojbackendserviceclient.service.UserFeighClient;
+import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -61,7 +60,7 @@ import static com.luoying.luoojbackendcommon.constant.RedisKey.*;
 @Slf4j
 public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> implements QuestionService {
     @Resource
-    private UserFeighClient userFeighClient;
+    private UserFeignClient userFeignClient;
 
     @Resource
     private AcceptedQuestionService acceptedQuestionService;
@@ -163,9 +162,9 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         Long userId = question.getUserId();
         User user = null;
         if (userId != null && userId > 0) {
-            user = userFeighClient.getById(userId);
+            user = userFeignClient.getById(userId);
         }
-        UserVO userVO = userFeighClient.getUserVO(user);
+        UserVO userVO = userFeignClient.getUserVO(user);
         // 设置创建人消息
         questionVO.setUserVO(userVO);
         // 返回
@@ -189,7 +188,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         }
         // 1. 题目关联查询用户信息
         Set<Long> userIdSet = questionList.stream().map(Question::getUserId).collect(Collectors.toSet());
-        Map<Long, List<User>> userIdUserListMap = userFeighClient.listByIds(userIdSet).stream().collect(Collectors.groupingBy(User::getId));
+        Map<Long, List<User>> userIdUserListMap = userFeignClient.listByIds(userIdSet).stream().collect(Collectors.groupingBy(User::getId));
         // 2. 填充信息
         List<QuestionVO> questionVOList = questionList.stream().map(question -> {
             QuestionVO questionVO = QuestionVO.objToVo(question);
@@ -199,13 +198,13 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
             if (userIdUserListMap.containsKey(userId)) {
                 user = userIdUserListMap.get(userId).get(0);
             }
-            questionVO.setUserVO(userFeighClient.getUserVO(user));
+            questionVO.setUserVO(userFeignClient.getUserVO(user));
             return questionVO;
         }).collect(Collectors.toList());
 
         // 4. 获取当前登录用户id
         try {
-            User loginUser = userFeighClient.getLoginUser(request);
+            User loginUser = userFeignClient.getLoginUser(request);
             if (loginUser != null) {
                 Long id = loginUser.getId();
                 // 5. 查询该用户通过的题目，获取所有通过题目的id集合

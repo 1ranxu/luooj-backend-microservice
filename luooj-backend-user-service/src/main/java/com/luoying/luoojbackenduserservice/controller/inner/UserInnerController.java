@@ -1,7 +1,7 @@
 package com.luoying.luoojbackenduserservice.controller.inner;
 
 import com.luoying.luoojbackendmodel.entity.User;
-import com.luoying.luoojbackendserviceclient.service.UserFeighClient;
+import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
 import com.luoying.luoojbackenduserservice.service.UserService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +18,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/inner")
-public class UserInnerController implements UserFeighClient {
+public class UserInnerController implements UserFeignClient {
 
     @Resource
     private UserService userService;

@@ -22,7 +22,7 @@ import static com.luoying.luoojbackendcommon.constant.UserConstant.USER_LOGIN_ST
  * 用户服务
  */
 @FeignClient(name = "luooj-backend-user-service", path = "/api/user/inner")
-public interface UserFeighClient {
+public interface UserFeignClient {
 
     /**
      * 根据id获取用户

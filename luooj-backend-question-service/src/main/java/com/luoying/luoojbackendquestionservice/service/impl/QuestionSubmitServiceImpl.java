@@ -23,7 +23,7 @@ import com.luoying.luoojbackendquestionservice.rabbitmq.MessageProducer;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
 import com.luoying.luoojbackendserviceclient.service.JudgeFeignClient;
-import com.luoying.luoojbackendserviceclient.service.UserFeighClient;
+import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.context.annotation.Lazy;
@@ -50,7 +50,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     private QuestionService questionService;
 
     @Resource
-    private UserFeighClient userFeighClient;
+    private UserFeignClient userFeignClient;
 
     @Resource
     @Lazy
@@ -166,7 +166,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         QuestionSubmitVO questionSubmitVO = QuestionSubmitVO.objToVo(questionSubmit);
         // 脱敏
         // 仅本人能和管理员能看见提交记录的代码
-        if (loginUser.getId() != questionSubmit.getUserId() && !userFeighClient.isAdmin(loginUser)) {
+        if (loginUser.getId() != questionSubmit.getUserId() && !userFeignClient.isAdmin(loginUser)) {
             questionSubmitVO.setCode(null);
         }
         return questionSubmitVO;
@@ -190,7 +190,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         }
         // 1. 关联查询用户信息
         Set<Long> userIdSet = questionSubmitList.stream().map(QuestionSubmit::getUserId).collect(Collectors.toSet());
-        Map<Long, List<User>> userIdUserListMap = userFeighClient.listByIds(userIdSet).stream()
+        Map<Long, List<User>> userIdUserListMap = userFeignClient.listByIds(userIdSet).stream()
                 .collect(Collectors.groupingBy(User::getId));
         // 2. 关联查询题目信息
         Set<Long> questionIdSet = questionSubmitList.stream().map(QuestionSubmit::getQuestionId).collect(Collectors.toSet());
@@ -211,7 +211,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
             if (questionIdUserListMap.containsKey(questionId)) {
                 question = questionIdUserListMap.get(questionId).get(0);
             }
-            questionSubmitVO.setUserVO(userFeighClient.getUserVO(user));
+            questionSubmitVO.setUserVO(userFeignClient.getUserVO(user));
             questionSubmitVO.setQuestionVO(QuestionVO.objToVo(question));
             return questionSubmitVO;
         }).collect(Collectors.toList());
@@ -228,7 +228,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     public QuestionSubmitDetail getPersonSubmitDetail(HttpServletRequest request) {
         QuestionSubmitDetail questionSubmitDetail = new QuestionSubmitDetail();
         // 1.获取登录用户id
-        User loginUser = userFeighClient.getLoginUser(request);
+        User loginUser = userFeignClient.getLoginUser(request);
         // 2.根据年份分组
         LambdaQueryWrapper<QuestionSubmit> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(QuestionSubmit::getUserId, loginUser.getId());

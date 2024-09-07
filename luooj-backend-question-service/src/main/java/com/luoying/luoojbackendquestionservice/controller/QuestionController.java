@@ -36,7 +36,7 @@ import com.luoying.luoojbackendquestionservice.service.AcceptedQuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
 import com.luoying.luoojbackendserviceclient.service.JudgeFeignClient;
-import com.luoying.luoojbackendserviceclient.service.UserFeighClient;
+import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RRateLimiter;
 import org.springframework.beans.BeanUtils;
@@ -66,7 +66,7 @@ public class QuestionController {
     private QuestionService questionService;
 
     @Resource
-    private UserFeighClient userFeignClient;
+    private UserFeignClient userFeignClient;
 
     @Resource
     private RRateLimiter rateLimiter;
