@@ -48,12 +48,12 @@ public class Question implements Serializable {
     /**
      * 题目提交数
      */
-    private Integer submitNum;
+    private Long submitNum;
 
     /**
      * 题目通过数
      */
-    private Integer acceptedNum;
+    private Long acceptedNum;
 
     /**
      * 判题配置（json对象）

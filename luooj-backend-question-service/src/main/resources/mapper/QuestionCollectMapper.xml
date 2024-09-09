@@ -6,7 +6,7 @@
 
     <resultMap id="BaseResultMap" type="com.luoying.luoojbackendmodel.entity.QuestionCollect">
             <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="questionListId" column="questionListId" jdbcType="VARCHAR"/>
+            <result property="questionListId" column="questionListId" jdbcType="BIGINT"/>
             <result property="questionId" column="questionId" jdbcType="BIGINT"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
     </resultMap>

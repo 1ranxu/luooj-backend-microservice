@@ -38,17 +38,12 @@ public class ContestResult implements Serializable {
     /**
      * 总得分
      */
-    private Long totalScore;
+    private Integer totalScore;
 
     /**
      * 所有题目的总耗时(s)
      */
-    private Long totalTime;
-
-    /**
-     * 所有题目的总内存(KB)
-     */
-    private Long totalMemory;
+    private Integer totalTime;
 
     /**
      * 竞赛详情（json）

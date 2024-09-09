@@ -22,7 +22,7 @@ public class QuestionCollect implements Serializable {
     /**
      * 题单id
      */
-    private String questionListId;
+    private Long questionListId;
 
     /**
      * 收藏的题目的id

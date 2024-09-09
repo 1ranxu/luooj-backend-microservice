@@ -11,8 +11,8 @@
         <result property="difficulty" column="difficulty" jdbcType="TINYINT"/>
         <result property="tags" column="tags" jdbcType="VARCHAR"/>
         <result property="answer" column="answer" jdbcType="VARCHAR"/>
-        <result property="submitNum" column="submitNum" jdbcType="INTEGER"/>
-        <result property="acceptedNum" column="acceptedNum" jdbcType="INTEGER"/>
+        <result property="submitNum" column="submitNum" jdbcType="BIGINT"/>
+        <result property="acceptedNum" column="acceptedNum" jdbcType="BIGINT"/>
         <result property="judgeConfig" column="judgeConfig" jdbcType="VARCHAR"/>
         <result property="judgeCase" column="judgeCase" jdbcType="VARCHAR"/>
         <result property="comments" column="comments" jdbcType="BIGINT"/>

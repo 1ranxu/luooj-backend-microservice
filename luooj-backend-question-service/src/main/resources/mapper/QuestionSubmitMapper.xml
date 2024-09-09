@@ -11,7 +11,7 @@
         <result property="userId" column="userId" jdbcType="BIGINT"/>
         <result property="code" column="code" jdbcType="VARCHAR"/>
         <result property="judgeInfo" column="judgeInfo" jdbcType="VARCHAR"/>
-        <result property="status" column="status" jdbcType="INTEGER"/>
+        <result property="status" column="status" jdbcType="TINYINT"/>
         <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
         <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
