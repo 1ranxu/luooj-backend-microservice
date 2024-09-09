@@ -6,15 +6,13 @@
 
     <resultMap id="BaseResultMap" type="com.luoying.luoojbackendmodel.entity.QuestionSolutionCollect">
             <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="questionListId" column="questionListId" jdbcType="BIGINT"/>
+            <result property="solutionId" column="solutionId" jdbcType="BIGINT"/>
             <result property="userId" column="userId" jdbcType="BIGINT"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
-            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
-            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,questionListId,userId,
-        createTime,updateTime,isDelete
+        id,solutionId,userId,
+        createTime
     </sql>
 </mapper>

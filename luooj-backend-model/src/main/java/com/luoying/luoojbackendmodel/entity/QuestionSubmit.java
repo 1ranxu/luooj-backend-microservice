@@ -56,11 +56,6 @@ public class QuestionSubmit implements Serializable {
     private Date createTime;
 
     /**
-     * 更新时间
-     */
-    private Date updateTime;
-
-    /**
      * 是否删除
      */
     @TableLogic

@@ -55,11 +55,6 @@ public class QuestionSolution implements Serializable {
     private Long comments;
 
     /**
-     * 收藏数
-     */
-    private Long favourNum;
-
-    /**
      * 创建时间
      */
     private Date createTime;

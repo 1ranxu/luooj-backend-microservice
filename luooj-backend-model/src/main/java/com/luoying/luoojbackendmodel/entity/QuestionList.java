@@ -30,11 +30,6 @@ public class QuestionList implements Serializable {
     private Long userId;
 
     /**
-     * 收藏数
-     */
-    private Long favourNum;
-
-    /**
      * 创建时间
      */
     private Date createTime;
@@ -43,12 +38,6 @@ public class QuestionList implements Serializable {
      * 更新时间
      */
     private Date updateTime;
-
-    /**
-     * 是否删除
-     */
-    @TableLogic
-    private Integer isDelete;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

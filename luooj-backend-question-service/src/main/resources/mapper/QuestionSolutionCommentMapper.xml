@@ -9,19 +9,16 @@
             <result property="userId" column="userId" jdbcType="BIGINT"/>
             <result property="solutionId" column="solutionId" jdbcType="BIGINT"/>
             <result property="parentId" column="parentId" jdbcType="BIGINT"/>
-            <result property="respondId" column="respondId" jdbcType="BIGINT"/>
+            <result property="respondUserId" column="respondUserId" jdbcType="BIGINT"/>
             <result property="content" column="content" jdbcType="VARCHAR"/>
             <result property="likes" column="likes" jdbcType="BIGINT"/>
-            <result property="status" column="status" jdbcType="TINYINT"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
-            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         id,userId,solutionId,
-        parentId,respondId,content,
-        likes,status,createTime,
-        updateTime,isDelete
+        parentId,respondUserId,content,
+        likes,createTime,isDelete
     </sql>
 </mapper>

@@ -22,8 +22,9 @@
 
     <sql id="Base_Column_List">
         id,title,startTime,
-        endTime,award,tips,
-        questions,userId,status,
-        createTime,updateTime,isDelete
+        endTime,duration,award,
+        tips,questions,userId,
+        status,createTime,updateTime,
+        isDelete
     </sql>
 </mapper>

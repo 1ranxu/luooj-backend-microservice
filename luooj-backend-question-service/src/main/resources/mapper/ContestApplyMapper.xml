@@ -9,12 +9,10 @@
             <result property="contestId" column="contestId" jdbcType="BIGINT"/>
             <result property="applicantId" column="applicantId" jdbcType="BIGINT"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
-            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
-            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         id,contestId,applicantId,
-        createTime,updateTime,isDelete
+        createTime
     </sql>
 </mapper>
