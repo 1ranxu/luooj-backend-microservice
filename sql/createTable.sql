@@ -230,18 +230,31 @@ create table contest_result
     index         idx_contestId (contestId) comment '竞赛id索引'
 ) comment '竞赛成绩表' collate = utf8mb4_unicode_ci;
 
+-- 评论举报表
 create table comment_report
 (
-    id            bigint auto_increment comment '评论举报记录id' primary key,
-    userId        bigint unsigned                            not null comment '检举人id',
-    commentId     bigint unsigned                             		  comment '被检举评论的id',
-    reportedUserId        bigint unsigned                    not null comment '被检举人id',
-    content       varchar(1024)                              not null comment '评论内容',
-    createTime    datetime         default CURRENT_TIMESTAMP not null comment '创建时间',
+    id             bigint unsigned auto_increment comment '评论举报记录id' primary key,
+    userId         bigint unsigned                    not null comment '检举人id',
+    commentId      bigint unsigned                    not null comment '被检举评论的id',
+    reportedUserId bigint unsigned                    not null comment '被检举人id',
+    createTime     datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     index idx_userId (userId) comment '检举人id索引',
     index idx_commentId (commentId) comment '被检举评论的id索引',
-    index idx_reportedUserId (reportedUserId) comment '被检举人id索引',
+    index idx_reportedUserId (reportedUserId) comment '被检举人id索引'
 ) comment '评论举报表' collate = utf8mb4_unicode_ci;
+
+-- 题解举报表
+create table question_solution_report
+(
+    id             bigint unsigned auto_increment comment '题解举报记录id' primary key,
+    userId         bigint unsigned                    not null comment '检举人id',
+    solutionId     bigint unsigned                    not null comment '被检举题解的id',
+    reportedUserId bigint unsigned                    not null comment '被检举人id',
+    createTime     datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    index idx_userId (userId) comment '检举人id索引',
+    index idx_solutionId (solutionId) comment '被检举题解的id索引',
+    index idx_reportedUserId (reportedUserId) comment '被检举人id索引'
+) comment '题解举报表' collate = utf8mb4_unicode_ci;
 
 
 
