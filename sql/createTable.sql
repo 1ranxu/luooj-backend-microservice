@@ -62,7 +62,6 @@ create table question
     judgeCase   text                                          null comment '判题用例（json数组）',
     comments    bigint unsigned     default 0                 not null comment '评论数',
     thumbNum    bigint unsigned     default 0                 not null comment '点赞数',
-    favourNum   bigint unsigned     default 0                 not null comment '收藏数',
     userId      bigint unsigned                               not null comment '创建用户 id',
     createTime  datetime            default CURRENT_TIMESTAMP not null comment '创建时间',
     updateTime  datetime            default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
@@ -235,12 +234,14 @@ create table comment_report
 (
     id             bigint unsigned auto_increment comment '评论举报记录id' primary key,
     userId         bigint unsigned                    not null comment '检举人id',
+    commentType    tinyint                            not null comment '评论类型（0-题解评论，1-题目评论）',
     commentId      bigint unsigned                    not null comment '被检举评论的id',
     reportedUserId bigint unsigned                    not null comment '被检举人id',
     createTime     datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    index idx_userId (userId) comment '检举人id索引',
-    index idx_commentId (commentId) comment '被检举评论的id索引',
-    index idx_reportedUserId (reportedUserId) comment '被检举人id索引'
+    index          idx_commentType (commentType) comment '评论类型索引',
+    index          idx_userId (userId) comment '检举人id索引',
+    index          idx_commentId (commentId) comment '被检举评论的id索引',
+    index          idx_reportedUserId (reportedUserId) comment '被检举人id索引'
 ) comment '评论举报表' collate = utf8mb4_unicode_ci;
 
 -- 题解举报表
@@ -251,9 +252,9 @@ create table question_solution_report
     solutionId     bigint unsigned                    not null comment '被检举题解的id',
     reportedUserId bigint unsigned                    not null comment '被检举人id',
     createTime     datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    index idx_userId (userId) comment '检举人id索引',
-    index idx_solutionId (solutionId) comment '被检举题解的id索引',
-    index idx_reportedUserId (reportedUserId) comment '被检举人id索引'
+    index          idx_userId (userId) comment '检举人id索引',
+    index          idx_solutionId (solutionId) comment '被检举题解的id索引',
+    index          idx_reportedUserId (reportedUserId) comment '被检举人id索引'
 ) comment '题解举报表' collate = utf8mb4_unicode_ci;
 
 

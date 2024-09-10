@@ -27,6 +27,11 @@ public class CommentReport implements Serializable {
     private Long userId;
 
     /**
+     * 评论类型（0-题解评论，1-题目评论）
+     */
+    private Integer commentType;
+
+    /**
      * 被检举评论的id
      */
     private Long commentId;

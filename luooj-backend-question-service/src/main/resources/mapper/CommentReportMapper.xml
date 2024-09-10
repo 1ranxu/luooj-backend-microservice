@@ -7,13 +7,13 @@
     <resultMap id="BaseResultMap" type="com.luoying.luoojbackendmodel.entity.CommentReport">
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="commentType" column="commentType" jdbcType="TINYINT"/>
             <result property="commentId" column="commentId" jdbcType="BIGINT"/>
             <result property="reportedUserId" column="reportedUserId" jdbcType="BIGINT"/>
-            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,userId,commentId,
-        reportedUserId,createTime
+        id,userId,commentType,
+        commentId,reportedUserId,createTime
     </sql>
 </mapper>

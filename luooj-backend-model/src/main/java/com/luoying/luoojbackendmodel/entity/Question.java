@@ -76,11 +76,6 @@ public class Question implements Serializable {
     private Long thumbNum;
 
     /**
-     * 收藏数
-     */
-    private Long favourNum;
-
-    /**
      * 创建用户 id
      */
     private Long userId;
