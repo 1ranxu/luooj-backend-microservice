@@ -70,6 +70,12 @@ public class QuestionSolution implements Serializable {
     @TableLogic
     private Integer isDelete;
 
+    /**
+     * 是否点赞过
+     */
+    @TableField(exist = false)
+    private Boolean isLike;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

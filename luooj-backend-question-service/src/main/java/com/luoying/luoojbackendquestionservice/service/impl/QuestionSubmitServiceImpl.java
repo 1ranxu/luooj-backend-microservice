@@ -84,10 +84,8 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         // 设置提交数
         Question updateQuestion = new Question();
         synchronized (this) {// 串行设置
-            Integer submitNum = question.getSubmitNum();
-            submitNum = submitNum + 1;
             updateQuestion.setId(questionId);
-            updateQuestion.setSubmitNum(submitNum);
+            updateQuestion.setSubmitNum(question.getSubmitNum() + 1);
             boolean save = questionService.updateById(updateQuestion);
             if (!save) {
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "数据保存失败");

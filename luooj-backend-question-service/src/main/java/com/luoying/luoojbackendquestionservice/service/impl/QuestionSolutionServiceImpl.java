@@ -1,7 +1,9 @@
 package com.luoying.luoojbackendquestionservice.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.BooleanUtil;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -9,6 +11,7 @@ import com.google.gson.Gson;
 import com.luoying.luoojbackendcommon.common.DeleteRequest;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.constant.CommonConstant;
+import com.luoying.luoojbackendcommon.constant.RedisKey;
 import com.luoying.luoojbackendcommon.constant.UserConstant;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
 import com.luoying.luoojbackendcommon.exception.ThrowUtils;
@@ -17,18 +20,24 @@ import com.luoying.luoojbackendmodel.dto.question_solution.QuestionSolutionAddRe
 import com.luoying.luoojbackendmodel.dto.question_solution.QuestionSolutionQueryRequest;
 import com.luoying.luoojbackendmodel.dto.question_solution.QuestionSolutionUpdateRequest;
 import com.luoying.luoojbackendmodel.entity.QuestionSolution;
+import com.luoying.luoojbackendmodel.entity.QuestionSolutionComment;
 import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionSolutionMapper;
+import com.luoying.luoojbackendquestionservice.service.QuestionSolutionCommentService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSolutionService;
 import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+
+import static com.luoying.luoojbackendcommon.constant.RedisKey.LIKE_LIST_KEY;
 
 /**
  * @author 落樱的悔恨
@@ -41,6 +50,13 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
 
     @Resource
     private UserFeignClient userFeignClient;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    @Lazy
+    private QuestionSolutionCommentService questionSolutionCommentService;
 
     private final static Gson GSON = new Gson();
 
@@ -86,8 +102,70 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
         if (!questionSolution.getUserId().equals(userId) && !UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "只有本人或管理员可以删除");
         }
-        // 删除
-        return this.removeById(deleteRequest.getId());
+        // 删除该题解下的所有一级评论
+        LambdaQueryWrapper<QuestionSolutionComment> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(QuestionSolutionComment::getSolutionId, deleteRequest.getId());
+        queryWrapper.eq(QuestionSolutionComment::getParentId, 0);
+        List<QuestionSolutionComment> list = questionSolutionCommentService.list(queryWrapper);
+        for (QuestionSolutionComment c : list) {
+            DeleteRequest delete = new DeleteRequest();
+            delete.setId(c.getId());
+            questionSolutionCommentService.deleteQuestionSolutionComment(delete, request);
+        }
+        // 删除题解
+        boolean isSuccess = this.removeById(deleteRequest.getId());
+        if (isSuccess) { // 删除缓存
+            String key = RedisKey.getKey(LIKE_LIST_KEY, "question_solution", deleteRequest.getId());
+            stringRedisTemplate.delete(key);
+        }
+        return isSuccess;
+    }
+
+    /**
+     * 点赞题解
+     *
+     * @param id
+     * @param request
+     * @return
+     */
+    @Override
+    public Boolean likeQuestionSolution(Long id, HttpServletRequest request) {
+        // 获取登录用户
+        User loginUser = userFeignClient.getLoginUser(request);
+        // 判断当前登录用户是否已经点赞该题解
+        String key = RedisKey.getKey(LIKE_LIST_KEY, "question_solution", id);
+        Boolean isMember = stringRedisTemplate.opsForSet().isMember(key, loginUser.getId().toString());
+        if (BooleanUtil.isFalse(isMember)) { // 未点赞
+            // 数据库点赞数 +1
+            boolean isSuccess = update().setSql("likes = likes + 1").eq("id", id).update();
+            if (isSuccess) {
+                // 保存用户到Redis的set集合
+                stringRedisTemplate.opsForSet().add(key, loginUser.getId().toString());
+            }
+            return isSuccess;
+        } else { // 已点赞
+            // 数据库点赞数 -1
+            boolean isSuccess = update().setSql("likes = likes - 1").eq("id", id).update();
+            if (isSuccess) {
+                // 把用户从Redis的set集合移除
+                stringRedisTemplate.opsForSet().remove(key, loginUser.getId().toString());
+            }
+            return isSuccess;
+        }
+    }
+
+    /**
+     * 判断题解是否被点赞过
+     *
+     * @param solutionId
+     * @param userId
+     * @return
+     */
+    @Override
+    public Boolean isLiked(Long solutionId, Long userId) {
+        // 判断当前用户是否已经点赞该题解
+        String key = RedisKey.getKey(LIKE_LIST_KEY, "question_solution", solutionId);
+        return stringRedisTemplate.opsForSet().isMember(key, userId.toString());
     }
 
     /**
@@ -191,15 +269,22 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
      * @return
      */
     @Override
-    public Page<QuestionSolution> listQuestionSolutionByPageUser(QuestionSolutionQueryRequest questionSolutionQueryRequest) {
+    public Page<QuestionSolution> listQuestionSolutionByPageUser(QuestionSolutionQueryRequest questionSolutionQueryRequest, HttpServletRequest request) {
         // 获取分页参数
         long current = questionSolutionQueryRequest.getCurrent();
         long size = questionSolutionQueryRequest.getPageSize();
+        // 获取登录用户id
+        Long userId = userFeignClient.getLoginUser(request).getId();
         // 限制爬虫
         ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
         // 查询
-        return this.page(new Page<>(current, size),
+        Page<QuestionSolution> page = this.page(new Page<>(current, size),
                 this.getQueryWrapper(questionSolutionQueryRequest));
+        // 判断是否点赞过题解
+        for (QuestionSolution questionSolution : page.getRecords()) {
+            questionSolution.setIsLike(isLiked(questionSolution.getId(), userId));
+        }
+        return page;
     }
 }
 

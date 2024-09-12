@@ -52,6 +52,18 @@ public class QuestionSolutionController {
     }
 
     /**
+     * 点赞题解
+     *
+     * @param id
+     * @param request
+     * @return
+     */
+    @PostMapping("/like")
+    public BaseResponse<Boolean> likeQuestionSolution(@RequestParam("id") Long id, HttpServletRequest request) {
+        return ResultUtils.success(questionSolutionService.likeQuestionSolution(id, request));
+    }
+
+    /**
      * 更新题解
      *
      * @param questionSolutionUpdateRequest
@@ -70,7 +82,7 @@ public class QuestionSolutionController {
      * @return
      */
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    @PostMapping("/get")
+    @GetMapping("/get")
     public BaseResponse<QuestionSolution> getQuestionSolutionById(@RequestParam("id") Long id) {
         return ResultUtils.success(questionSolutionService.getQuestionSolutionById(id));
     }
@@ -91,11 +103,12 @@ public class QuestionSolutionController {
      * 只传userId，就可实现分页获取当前用户创建的题解列表
      * 只传questionId，就可实现分页获取某题目下的题解列表
      * 也可以根据点赞数，评论数，收藏数，创建时间排序
+     *
      * @param questionSolutionQueryRequest 题解查询请求
      */
     @PostMapping("/list/page/user")
-    public BaseResponse<Page<QuestionSolution>> listQuestionSolutionByPageUser(@RequestBody QuestionSolutionQueryRequest questionSolutionQueryRequest) {
-        return ResultUtils.success(questionSolutionService.listQuestionSolutionByPageUser(questionSolutionQueryRequest));
+    public BaseResponse<Page<QuestionSolution>> listQuestionSolutionByPageUser(@RequestBody QuestionSolutionQueryRequest questionSolutionQueryRequest, HttpServletRequest request) {
+        return ResultUtils.success(questionSolutionService.listQuestionSolutionByPageUser(questionSolutionQueryRequest, request));
     }
 
 }
