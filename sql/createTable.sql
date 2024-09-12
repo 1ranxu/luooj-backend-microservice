@@ -61,7 +61,7 @@ create table question
     judgeConfig varchar(128)                                  null comment '判题配置（json对象）',
     judgeCase   text                                          null comment '判题用例（json数组）',
     comments    bigint unsigned     default 0                 not null comment '评论数',
-    thumbNum    bigint unsigned     default 0                 not null comment '点赞数',
+    likes       bigint unsigned     default 0                 not null comment '点赞数',
     userId      bigint unsigned                               not null comment '创建用户 id',
     createTime  datetime            default CURRENT_TIMESTAMP not null comment '创建时间',
     updateTime  datetime            default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',

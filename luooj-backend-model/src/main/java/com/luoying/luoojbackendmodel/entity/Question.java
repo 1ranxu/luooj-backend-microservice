@@ -73,7 +73,7 @@ public class Question implements Serializable {
     /**
      * 点赞数
      */
-    private Long thumbNum;
+    private Long likes;
 
     /**
      * 创建用户 id

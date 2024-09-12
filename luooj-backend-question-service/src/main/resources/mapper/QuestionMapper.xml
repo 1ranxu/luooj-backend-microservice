@@ -16,7 +16,7 @@
         <result property="judgeConfig" column="judgeConfig" jdbcType="VARCHAR"/>
         <result property="judgeCase" column="judgeCase" jdbcType="VARCHAR"/>
         <result property="comments" column="comments" jdbcType="BIGINT"/>
-        <result property="thumbNum" column="thumbNum" jdbcType="BIGINT"/>
+        <result property="likes" column="likes" jdbcType="BIGINT"/>
         <result property="userId" column="userId" jdbcType="BIGINT"/>
         <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
         <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
@@ -40,7 +40,7 @@
         id,title,content,
         difficulty,tags,answer,
         submitNum,acceptedNum,judgeConfig,
-        judgeCase,comments,thumbNum,
+        judgeCase,comments,likes,
         userId,createTime,updateTime,
         isDelete
     </sql>
