@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
+import com.luoying.luoojbackendcommon.common.DeleteRequest;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.constant.CommonConstant;
 import com.luoying.luoojbackendcommon.constant.RedisKey;
@@ -16,10 +17,7 @@ import com.luoying.luoojbackendcommon.exception.BusinessException;
 import com.luoying.luoojbackendcommon.exception.ThrowUtils;
 import com.luoying.luoojbackendcommon.utils.RedisData;
 import com.luoying.luoojbackendcommon.utils.SqlUtils;
-import com.luoying.luoojbackendmodel.dto.question.QuestionJudgeCase;
-import com.luoying.luoojbackendmodel.dto.question.QuestionJudgeCconfig;
-import com.luoying.luoojbackendmodel.dto.question.QuestionQueryRequest;
-import com.luoying.luoojbackendmodel.dto.question.QuestionUpdateRequest;
+import com.luoying.luoojbackendmodel.dto.question.*;
 import com.luoying.luoojbackendmodel.entity.AcceptedQuestion;
 import com.luoying.luoojbackendmodel.entity.Question;
 import com.luoying.luoojbackendmodel.entity.User;
@@ -34,6 +32,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +42,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -63,15 +63,66 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
     private UserFeignClient userFeignClient;
 
     @Resource
+    @Lazy
     private AcceptedQuestionService acceptedQuestionService;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    @Resource
+    private QuestionMapper questionMapper;
+
     private final static Gson GSON = new Gson();
 
     @Resource
     private ThreadPoolExecutor threadPoolExecutor;
+
+    /**
+     * 创建题目（仅管理员）
+     *
+     * @param questionAddRequest
+     * @param request
+     * @return
+     */
+    @Override
+    public Long addQuestion(QuestionAddRequest questionAddRequest, HttpServletRequest request) {
+        // 判空
+        if (questionAddRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 拷贝
+        Question question = new Question();
+        BeanUtils.copyProperties(questionAddRequest, question);
+        // 获取题目标签
+        List<String> tags = questionAddRequest.getTags();
+        if (tags != null) {
+            // 转Json字符串
+            question.setTags(GSON.toJson(tags));
+        }
+        // 获取判题用例
+        List<QuestionJudgeCase> judgeCaseList = questionAddRequest.getJudgeCaseList();
+        if (judgeCaseList != null) {
+            // 转Json字符串
+            question.setJudgeCase(GSON.toJson(judgeCaseList));
+        }
+        // 获取判题配置
+        QuestionJudgeCconfig judgeConfig = questionAddRequest.getJudgeConfig();
+        if (judgeConfig != null) {
+            // 转Json字符串
+            question.setJudgeConfig(GSON.toJson(judgeConfig));
+        }
+        // 校验参数
+        this.validQuestion(question, true);
+        // 获取登录用户
+        User loginUser = userFeignClient.getLoginUser(request);
+        // 设置创建人
+        question.setUserId(loginUser.getId());
+        // 保存
+        boolean result = this.save(question);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        return question.getId();
+    }
+
 
     /**
      * 校验参数
@@ -112,6 +163,116 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         if (StringUtils.isNotBlank(judgeConfig) && content.length() > 8192) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "判题配置过长");
         }
+    }
+
+
+    /**
+     * 删除题目（仅管理员）
+     *
+     * @param deleteRequest
+     * @return
+     */
+    @Override
+    public Boolean deleteQuestion(DeleteRequest deleteRequest) {
+        // 校验
+        if (deleteRequest == null || deleteRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 判断题目是否存在
+        long id = deleteRequest.getId();
+        Question oldQuestion = this.getById(id);
+        ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
+        // 删除
+        return this.removeById(id);
+    }
+
+    /**
+     * 更新题目（仅管理员）
+     *
+     * @param questionUpdateRequest
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateQuestion(QuestionUpdateRequest questionUpdateRequest) {
+        // 校验
+        if (questionUpdateRequest == null || questionUpdateRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 拷贝
+        Question question = new Question();
+        BeanUtils.copyProperties(questionUpdateRequest, question);
+        // 获取题目标签
+        List<String> tags = questionUpdateRequest.getTags();
+        if (tags != null) {
+            // 转Json字符串
+            question.setTags(GSON.toJson(tags));
+        }
+        // 获取判题用例
+        List<QuestionJudgeCase> judgeCaseList = questionUpdateRequest.getJudgeCaseList();
+        if (judgeCaseList != null) {
+            // 转Json字符串
+            question.setJudgeCase(GSON.toJson(judgeCaseList));
+        }
+        // 获取判题配置
+        QuestionJudgeCconfig judgeConfig = questionUpdateRequest.getJudgeConfig();
+        if (judgeConfig != null) {
+            // 转Json字符串
+            question.setJudgeConfig(GSON.toJson(judgeConfig));
+        }
+        // 参数校验
+        this.validQuestion(question, false);
+        // 判断题目是否存在
+        long id = questionUpdateRequest.getId();
+        Question oldQuestion = this.getById(id);
+        ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
+        // 更新
+        boolean result = this.updateById(question);
+        // 删除缓存
+        stringRedisTemplate.delete(RedisKey.getKey(SINGLE_QUESTION_KEY, question.getId()));
+        // 返回
+        return result;
+    }
+
+    /**
+     * 根据 id 获取题目（仅管理员）
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public Question getQuestionById(long id) {
+        // 校验
+        if (id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 查询
+        Question question = this.getById(id);
+        if (question == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        return question;
+    }
+
+    /**
+     * 根据 id 获取封装后的题目
+     *
+     * @param id
+     * @param request
+     * @return
+     */
+    @Override
+    public QuestionVO getQuestionVOById(long id, HttpServletRequest request) {
+        // 校验
+        if (id <= 0 || (id + "").length() != 19) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 查询
+        Question question = this.queryById(id);
+        if (question == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        return this.getQuestionVO(question, request);
     }
 
     /**
@@ -172,13 +333,41 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
     }
 
     /**
-     * 分页获取封装后的题目
+     * 分页获取题目列表（仅管理员）
      *
-     * @param questionPage {@link Page<Question>}
-     * @param request      {@link HttpServletRequest}
+     * @param questionQueryRequest
+     * @return
      */
     @Override
-    public Page<QuestionVO> getQuestionVOPage(Page<Question> questionPage, HttpServletRequest request) {
+    public Page<Question> listQuestionByPage(QuestionQueryRequest questionQueryRequest) {
+        // 获取分页参数
+        long current = questionQueryRequest.getCurrent();
+        long size = questionQueryRequest.getPageSize();
+        // 查询
+        return this.page(new Page<>(current, size),
+                this.getQueryWrapper(questionQueryRequest));
+    }
+
+    /**
+     * 分页获取封装后的题目
+     *
+     * @param questionQueryRequest
+     * @param request
+     * @return
+     */
+    @Override
+    public Page<QuestionVO> getQuestionVOPage(QuestionQueryRequest questionQueryRequest, HttpServletRequest request) {
+        if (questionQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 获取分页参数
+        long current = questionQueryRequest.getCurrent();
+        long size = questionQueryRequest.getPageSize();
+        // 限制爬虫
+        ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
+        // 查询
+        Page<Question> questionPage = this.page(new Page<>(current, size),
+                this.getQueryWrapper(questionQueryRequest));
         // 获取题目集合
         List<Question> questionList = questionPage.getRecords();
         Page<QuestionVO> questionVOPage = new Page<>(questionPage.getCurrent(), questionPage.getSize(), questionPage.getTotal());
@@ -209,7 +398,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
                 Long id = loginUser.getId();
                 // 5. 查询该用户通过的题目，获取所有通过题目的id集合
                 LambdaQueryWrapper<AcceptedQuestion> queryWrapper = new LambdaQueryWrapper<>();
-                queryWrapper.eq(AcceptedQuestion::getUserId,id);
+                queryWrapper.eq(AcceptedQuestion::getUserId, id);
                 List<AcceptedQuestion> acceptedQuestionList = acceptedQuestionService.list(queryWrapper);
                 Set<Long> acceptedQuestionIdSet = acceptedQuestionList.stream().map(AcceptedQuestion::getQuestionId).collect(Collectors.toSet());
                 questionVOList = questionVOList.stream().map(questionVO -> {
@@ -233,6 +422,50 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         }
         questionVOPage.setRecords(questionVOList);
         return questionVOPage;
+    }
+
+    /**
+     * 更新题目（仅管理员）
+     *
+     * @param questionEditRequest
+     * @param request
+     * @return
+     */
+    @Override
+    public Boolean editQuestion(QuestionEditRequest questionEditRequest, HttpServletRequest request) {
+        // 判空
+        if (questionEditRequest == null || questionEditRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 拷贝
+        Question question = new Question();
+        BeanUtils.copyProperties(questionEditRequest, question);
+        // 获取题目标签
+        List<String> tags = questionEditRequest.getTags();
+        if (tags != null) {
+            // 转Json字符串
+            question.setTags(GSON.toJson(tags));
+        }
+        // 获取判题用例
+        List<QuestionJudgeCase> judgeCaseList = questionEditRequest.getJudgeCaseList();
+        if (judgeCaseList != null) {
+            // 转Json字符串
+            question.setJudgeCase(GSON.toJson(judgeCaseList));
+        }
+        // 获取判题配置
+        QuestionJudgeCconfig judgeConfig = questionEditRequest.getJudgeConfig();
+        if (judgeConfig != null) {
+            // 转Json字符串
+            question.setJudgeConfig(GSON.toJson(judgeConfig));
+        }
+        // 参数校验
+        this.validQuestion(question, false);
+        // 判断题目是否存在
+        long id = questionEditRequest.getId();
+        Question oldQuestion = this.getById(id);
+        ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
+        // 更新
+        return this.updateById(question);
     }
 
     /**
@@ -279,7 +512,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
             }
         }
 
-        if(json != null){ // 返回空值缓存
+        if (json != null) { // 返回空值缓存
             return null;
         }
 
@@ -302,6 +535,42 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
     }
 
     /**
+     * 获取上一道题目
+     * @param questionId
+     * @return
+     */
+    @Override
+    public Long getPrevQuestion(long questionId) {
+        String tableName = "question";
+        return questionMapper.getPrevQuestion(tableName, questionId);
+    }
+
+    /**
+     * 获取下一道题目
+     * @param questionId
+     * @return
+     */
+    @Override
+    public Long getNextQuestion(long questionId) {
+        String tableName = "question";
+        return questionMapper.getNextQuestion(tableName, questionId);
+    }
+
+    /**
+     * 随机获取一道题目
+     * @return
+     */
+    @Override
+    public Long getRandomQuestion() {
+        List<Question> questionList = questionMapper.selectList(null);
+        Random random = new Random();
+        int index = random.nextInt(questionList.size());
+        Question question = questionList.get(index);
+        return question.getId();
+    }
+
+
+    /**
      * 获取锁
      */
     private boolean tryLock(String key, long ttl) {
@@ -314,45 +583,6 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
      */
     private void unLock(String key) {
         stringRedisTemplate.delete(key);
-    }
-
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean update(QuestionUpdateRequest questionUpdateRequest) {
-        // 拷贝
-        Question question = new Question();
-        BeanUtils.copyProperties(questionUpdateRequest, question);
-        // 获取题目标签
-        List<String> tags = questionUpdateRequest.getTags();
-        if (tags != null) {
-            // 转Json字符串
-            question.setTags(GSON.toJson(tags));
-        }
-        // 获取判题用例
-        List<QuestionJudgeCase> judgeCaseList = questionUpdateRequest.getJudgeCaseList();
-        if (judgeCaseList != null) {
-            // 转Json字符串
-            question.setJudgeCase(GSON.toJson(judgeCaseList));
-        }
-        // 获取判题配置
-        QuestionJudgeCconfig judgeConfig = questionUpdateRequest.getJudgeConfig();
-        if (judgeConfig != null) {
-            // 转Json字符串
-            question.setJudgeConfig(GSON.toJson(judgeConfig));
-        }
-        // 参数校验
-        this.validQuestion(question, false);
-        // 判断题目是否存在
-        long id = questionUpdateRequest.getId();
-        Question oldQuestion = this.getById(id);
-        ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
-        // 更新
-        boolean result = this.updateById(question);
-        // 删除缓存
-        stringRedisTemplate.delete(RedisKey.getKey(SINGLE_QUESTION_KEY, question.getId()));
-        // 返回
-        return result;
     }
 }
 

@@ -2,15 +2,31 @@ package com.luoying.luoojbackendquestionservice.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.luoying.luoojbackendcommon.constant.RedisKey;
 import com.luoying.luoojbackendmodel.entity.AcceptedQuestion;
+import com.luoying.luoojbackendmodel.entity.Question;
+import com.luoying.luoojbackendmodel.entity.QuestionSubmit;
 import com.luoying.luoojbackendmodel.entity.User;
+import com.luoying.luoojbackendmodel.vo.AcceptedQuestionDetailVO;
 import com.luoying.luoojbackendquestionservice.mapper.AcceptedQuestionMapper;
 import com.luoying.luoojbackendquestionservice.service.AcceptedQuestionService;
+import com.luoying.luoojbackendquestionservice.service.QuestionService;
+import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
 import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import static com.luoying.luoojbackendcommon.constant.RedisKey.ACCEPTED_QUESTION_RANK_KEY;
+import static com.luoying.luoojbackendcommon.constant.RedisKey.ACCEPTED_QUESTION_RANK_KEY_TTL;
 
 /**
  * @author 落樱的悔恨
@@ -24,8 +40,99 @@ public class AcceptedQuestionServiceImpl extends ServiceImpl<AcceptedQuestionMap
     @Resource
     private UserFeignClient userFeignClient;
 
+    @Resource
+    private QuestionService questionService;
+
+    @Resource
+    private QuestionSubmitService questionSubmitService;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
+    @Override
+    public AcceptedQuestionDetailVO getAcceptedQuestionDetail(HttpServletRequest request) {
+        // 1.获取登录用户的id
+        User loginUser = userFeignClient.getLoginUser(request);
+        Long userId = loginUser.getId();
+        AcceptedQuestionDetailVO acceptedQuestionDetailVO = new AcceptedQuestionDetailVO();
+        // 2.填充通过题目总数
+        LambdaQueryWrapper<AcceptedQuestion> queryWrapper1 = new LambdaQueryWrapper<>();
+        queryWrapper1.eq(Objects.nonNull(userId), AcceptedQuestion::getUserId, userId);
+        List<AcceptedQuestion> acceptedQuestionList = this.list(queryWrapper1);
+        acceptedQuestionDetailVO.setPassTotalNum(acceptedQuestionList.size());
+        // 3.填充各难度的通过数
+        List<Long> questionIds = acceptedQuestionList.stream().map(acceptedQuestion -> acceptedQuestion.getQuestionId()).collect(Collectors.toList());
+        List<Question> questionList1 = questionService.listByIds(questionIds);
+        Map<Integer, List<Question>> difficultyMap1 = questionList1.stream().collect(Collectors.groupingBy(Question::getDifficulty));
+        HashMap<Integer, Integer> eachDifficultyPassNum = new HashMap<>();
+        eachDifficultyPassNum.put(0, 0);
+        eachDifficultyPassNum.put(1, 0);
+        eachDifficultyPassNum.put(2, 0);
+        for (Integer difficulty : difficultyMap1.keySet()) {
+            eachDifficultyPassNum.put(difficulty, difficultyMap1.get(difficulty).size());
+        }
+        acceptedQuestionDetailVO.setEachDifficultyPassNum(eachDifficultyPassNum);
+        // 4.填充题目总数
+        List<Question> questionList2 = questionService.list();
+        acceptedQuestionDetailVO.setQuestionTotalNum(questionList2.size());
+        // 5.填充各难度的题目数
+        Map<Integer, List<Question>> difficultyMap2 = questionList2.stream().collect(Collectors.groupingBy(Question::getDifficulty));
+        HashMap<Integer, Integer> eachDifficultyQuestionNum = new HashMap<>();
+        eachDifficultyQuestionNum.put(0, 0);
+        eachDifficultyQuestionNum.put(1, 0);
+        eachDifficultyQuestionNum.put(2, 0);
+        for (Integer difficulty : difficultyMap2.keySet()) {
+            eachDifficultyQuestionNum.put(difficulty, difficultyMap2.get(difficulty).size());
+        }
+        acceptedQuestionDetailVO.setEachDifficultyQuestionNum(eachDifficultyQuestionNum);
+        // 6.填充总提交通过率
+        LambdaQueryWrapper<QuestionSubmit> queryWrapper2 = new LambdaQueryWrapper<>();
+        queryWrapper2.eq(Objects.nonNull(userId), QuestionSubmit::getUserId, userId);
+        List<QuestionSubmit> questionSubmitList = questionSubmitService.list(queryWrapper2);
+        acceptedQuestionDetailVO.setSubmissionPassRate(acceptedQuestionList.size() * 1.0 / questionSubmitList.size());
+        // 7.填充各难度的提交通过率
+        Map<Long, List<QuestionSubmit>> collect = questionSubmitList.stream().collect(Collectors.groupingBy(QuestionSubmit::getQuestionId));
+        HashMap<Integer, Double> eachDifficultysubmissionPassRate = new HashMap<>();
+        eachDifficultysubmissionPassRate.put(0, 0.0);
+        eachDifficultysubmissionPassRate.put(1, 0.0);
+        eachDifficultysubmissionPassRate.put(2, 0.0);
+        // 统计各难度题目的提交总数
+        HashMap<Integer, Integer> eachDifficultysubmissionNum = new HashMap<>();
+        for (Long questionId : collect.keySet()) {
+            Question question = questionService.getById(questionId);
+            Integer difficulty = question.getDifficulty();
+            eachDifficultysubmissionNum.put(difficulty, eachDifficultysubmissionNum.getOrDefault(difficulty, 0) + collect.get(questionId).size());
+        }
+        for (Integer difficulty : eachDifficultyPassNum.keySet()) {
+            if (eachDifficultysubmissionNum.get(difficulty) == null) continue;
+            eachDifficultysubmissionPassRate.put(difficulty, eachDifficultyPassNum.get(difficulty) * 1.0 /
+                    eachDifficultysubmissionNum.get(difficulty));
+        }
+        acceptedQuestionDetailVO.setEachDifficultysubmissionPassRate(eachDifficultysubmissionPassRate);
+        return acceptedQuestionDetailVO;
+    }
+
+    @Override
+    public Long getAcceptedQuestionRanking(HttpServletRequest request) {
+        User loginUser = userFeignClient.getLoginUser(request);
+        // 查询缓存
+        Long userId = loginUser.getId();
+        String key = RedisKey.getKey(ACCEPTED_QUESTION_RANK_KEY);
+        Long rank = stringRedisTemplate.opsForZSet().rank(key, userId.toString());
+        if (rank != null) return rank + 1;
+        // 未查到，构建缓存
+        LambdaQueryWrapper<AcceptedQuestion> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AcceptedQuestion::getUserId, userId);
+        List<AcceptedQuestion> acceptedQuestionList = this.list(queryWrapper);
+        stringRedisTemplate.opsForZSet().add(key, userId.toString(), acceptedQuestionList.size() * 1.0);
+        stringRedisTemplate.expire(key, ACCEPTED_QUESTION_RANK_KEY_TTL, TimeUnit.MINUTES);
+        rank = stringRedisTemplate.opsForZSet().rank(key, userId.toString());
+        return rank + 1;
+    }
+
     /**
      * 判断当前用户是否通过了某道题目
+     *
      * @param questionId
      * @param request
      * @return

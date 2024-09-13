@@ -1,13 +1,20 @@
 package com.luoying.luoojbackendquestionservice.service.impl;
 
+import cn.hutool.core.util.BooleanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.constant.CommonConstant;
+import com.luoying.luoojbackendcommon.constant.RedisKey;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
+import com.luoying.luoojbackendcommon.exception.ThrowUtils;
 import com.luoying.luoojbackendcommon.utils.SqlUtils;
+import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeRequest;
+import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeResponse;
+import com.luoying.luoojbackendmodel.codesanbox.RunCodeRequest;
+import com.luoying.luoojbackendmodel.codesanbox.RunCodeResponse;
 import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitAddRequest;
 import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitDetail;
 import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitQueryRequest;
@@ -26,7 +33,9 @@ import com.luoying.luoojbackendserviceclient.service.JudgeFeignClient;
 import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.redisson.api.RRateLimiter;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -34,6 +43,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -53,6 +63,12 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     private UserFeignClient userFeignClient;
 
     @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private RRateLimiter rateLimiter;
+
+    @Resource
     @Lazy
     private JudgeFeignClient judgeFeignClient;
 
@@ -62,13 +78,33 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
 
     /**
      * 提交题目
-     *
      * @param questionSubmitAddRequest 题目提交创建请求
-     * @param loginUser                登录用户
-     * @return 提交记录id
+     * @param request
+     * @return
      */
     @Override
-    public long doQuestionSubmit(QuestionSubmitAddRequest questionSubmitAddRequest, User loginUser) {
+    public long doQuestionSubmit(QuestionSubmitAddRequest questionSubmitAddRequest, HttpServletRequest request) {
+        // 获取当前登录用户
+        final User loginUser = userFeignClient.getLoginUser(request);
+        // 获取单个用户题目提交的key
+        String key = RedisKey.getKey(RedisKey.SINGLE_USER_QUESTION_SUBMIT_KEY, loginUser.getId());
+        // 判断该用户5秒内是否提交过
+        Boolean isExists = stringRedisTemplate.hasKey(key);
+        if (BooleanUtil.isTrue(isExists)) {// 5秒内提交过就不允许获取令牌
+            throw new BusinessException(ErrorCode.API_REQUEST_ERROR, "您的提交次数过于频繁，请稍后再试");
+        }
+        // 获取令牌
+        if (!rateLimiter.tryAcquire()) {
+            throw new BusinessException(ErrorCode.API_REQUEST_ERROR, "系统繁忙，请稍后再试");
+        }
+        // 获取令牌成功，添加单个用户题目提交的key，标记该用户
+        stringRedisTemplate.opsForValue().set(key, "");
+        // 设置单个用户题目提交的key的过期时间，限制每个用户五秒内只能提交一次
+        stringRedisTemplate.expire(key, RedisKey.SINGLE_USER_QUESTION_SUBMIT_KEY_TTL, TimeUnit.SECONDS);
+        // 判空
+        if (questionSubmitAddRequest == null || questionSubmitAddRequest.getQuestionId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
         // 校验编程语言是否合法
         String language = questionSubmitAddRequest.getLanguage();
         QuestionSubmitLanguageEnum languageEnum = QuestionSubmitLanguageEnum.getEnumByValue(language);
@@ -154,31 +190,21 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     }
 
     /**
-     * 获取封装后的题目提交
-     *
-     * @param questionSubmit 题目提交
-     * @param loginUser      登录用户
-     */
-    @Override
-    public QuestionSubmitVO getQuestionSubmitVO(QuestionSubmit questionSubmit, User loginUser) {
-        QuestionSubmitVO questionSubmitVO = QuestionSubmitVO.objToVo(questionSubmit);
-        // 脱敏
-        // 仅本人能和管理员能看见提交记录的代码
-        if (loginUser.getId() != questionSubmit.getUserId() && !userFeignClient.isAdmin(loginUser)) {
-            questionSubmitVO.setCode(null);
-        }
-        return questionSubmitVO;
-    }
-
-    /**
      * 分页获取封装后的题目提交
-     *
-     * @param questionSubmitPage {@link Page<QuestionSubmit>}
-     * @param loginUser          登录用户
+     * @param questionSubmitQueryRequest
+     * @param request
+     * @return
      */
     @Override
-    public Page<QuestionSubmitVO> getQuestionSubmitVOPage(Page<QuestionSubmit> questionSubmitPage,
-                                                          User loginUser) {
+    public Page<QuestionSubmitVO> getQuestionSubmitVOPage(QuestionSubmitQueryRequest questionSubmitQueryRequest, HttpServletRequest request) {
+        // 获取分页参数
+        long current = questionSubmitQueryRequest.getCurrent();
+        long size = questionSubmitQueryRequest.getPageSize();
+        // 限制爬虫
+        ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
+        // 查询
+        Page<QuestionSubmit> questionSubmitPage = this.page(new Page<>(current, size),
+                this.getQueryWrapper(questionSubmitQueryRequest));
         // 获取题目提交集合
         List<QuestionSubmit> questionSubmitList = questionSubmitPage.getRecords();
         Page<QuestionSubmitVO> questionSubmitVOPage = new Page<>(questionSubmitPage.getCurrent(), questionSubmitPage.getSize(), questionSubmitPage.getTotal());
@@ -215,6 +241,35 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         }).collect(Collectors.toList());
         questionSubmitVOPage.setRecords(questionSubmitVOList);
         return questionSubmitVOPage;
+    }
+
+    /**
+     * 在线运行代码
+     * @param runCodeRequest 运行代码请求
+     * @return
+     */
+    @Override
+    public RunCodeResponse questionRunOnline(RunCodeRequest runCodeRequest) {
+        // 在线运行代码只需要提供一个输入用例，但执行代码请求需要输入用例以集合的方式传入，所以需要转换为集合，但集合只有一个元素
+        List<String> inputList = Arrays.asList(runCodeRequest.getInput());
+        // 构造执行代码请求
+        ExecuteCodeRequest executeCodeRequest =
+                ExecuteCodeRequest.builder()
+                        .code(runCodeRequest.getCode())
+                        .language(runCodeRequest.getLanguage())
+                        .inputList(inputList)
+                        .build();
+        // 运行
+        ExecuteCodeResponse executeCodeResponse = judgeFeignClient.runOnline(executeCodeRequest);
+        // 获取输出
+        List<String> outputList = Optional.ofNullable(executeCodeResponse.getOutputList()).orElse(Arrays.asList(""));
+        // 构造运行代码响应
+        return RunCodeResponse.builder()
+                .output(outputList.get(0))
+                .message(executeCodeResponse.getMessage())
+                .status(executeCodeResponse.getStatus())
+                .judgeInfo(executeCodeResponse.getJudgeInfo())
+                .build();
     }
 
     /**
@@ -270,5 +325,22 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         }
         questionSubmitDetail.setDayNum(dayNum);
         return questionSubmitDetail;
+    }
+
+    /**
+     * 获取封装后的题目提交
+     *
+     * @param questionSubmit 题目提交
+     * @param loginUser      登录用户
+     */
+    @Override
+    public QuestionSubmitVO getQuestionSubmitVO(QuestionSubmit questionSubmit, User loginUser) {
+        QuestionSubmitVO questionSubmitVO = QuestionSubmitVO.objToVo(questionSubmit);
+        // 脱敏
+        // 仅本人能和管理员能看见提交记录的代码
+        if (loginUser.getId() != questionSubmit.getUserId() && !userFeignClient.isAdmin(loginUser)) {
+            questionSubmitVO.setCode(null);
+        }
+        return questionSubmitVO;
     }
 }

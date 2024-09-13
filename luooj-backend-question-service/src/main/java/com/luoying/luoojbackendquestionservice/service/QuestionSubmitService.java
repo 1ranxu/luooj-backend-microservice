@@ -3,6 +3,8 @@ package com.luoying.luoojbackendquestionservice.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.luoying.luoojbackendmodel.codesanbox.RunCodeRequest;
+import com.luoying.luoojbackendmodel.codesanbox.RunCodeResponse;
 import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitAddRequest;
 import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitDetail;
 import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitQueryRequest;
@@ -21,12 +23,11 @@ import javax.servlet.http.HttpServletRequest;
 public interface QuestionSubmitService extends IService<QuestionSubmit> {
     /**
      * 提交题目
-     *
      * @param questionSubmitAddRequest 题目提交创建请求
-     * @param loginUser 登录用户
-     * @return 提交记录id
+     * @param request
+     * @return
      */
-    long doQuestionSubmit(QuestionSubmitAddRequest questionSubmitAddRequest, User loginUser);
+    long doQuestionSubmit(QuestionSubmitAddRequest questionSubmitAddRequest, HttpServletRequest request);
 
     /**
      * 获取查询条件
@@ -35,6 +36,28 @@ public interface QuestionSubmitService extends IService<QuestionSubmit> {
      */
     QueryWrapper<QuestionSubmit> getQueryWrapper(QuestionSubmitQueryRequest questionSubmitQueryRequest);
 
+    /**
+     * 分页获取封装后的题目提交
+     * @param questionSubmitQueryRequest
+     * @param request
+     * @return
+     */
+    Page<QuestionSubmitVO> getQuestionSubmitVOPage(QuestionSubmitQueryRequest questionSubmitQueryRequest, HttpServletRequest request);
+
+    /**
+     * 在线运行代码
+     * @param runCodeRequest 运行代码请求
+     * @return
+     */
+    RunCodeResponse questionRunOnline(RunCodeRequest runCodeRequest);
+
+
+    /**
+     * 获取个人提交详情
+     * @param request
+     * @return
+     */
+    QuestionSubmitDetail getPersonSubmitDetail(HttpServletRequest request);
 
     /**
      * 获取封装后的题目提交
@@ -44,18 +67,10 @@ public interface QuestionSubmitService extends IService<QuestionSubmit> {
      */
     QuestionSubmitVO getQuestionSubmitVO(QuestionSubmit questionSubmit, User loginUser);
 
-    /**
-     * 分页获取封装后的题目提交
-     *
-     * @param questionSubmitPage {@link Page<QuestionSubmit>}
-     * @param loginUser 登录用户
-     */
-    Page<QuestionSubmitVO> getQuestionSubmitVOPage(Page<QuestionSubmit> questionSubmitPage, User loginUser);
 
-    /**
-     * 获取个人提交详情
-     * @param request
-     * @return
-     */
-    QuestionSubmitDetail getPersonSubmitDetail(HttpServletRequest request);
+
+
+
+
+
 }
