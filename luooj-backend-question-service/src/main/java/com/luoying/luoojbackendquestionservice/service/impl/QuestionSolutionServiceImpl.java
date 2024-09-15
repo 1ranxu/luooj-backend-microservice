@@ -11,6 +11,7 @@ import com.google.gson.Gson;
 import com.luoying.luoojbackendcommon.common.DeleteRequest;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.constant.CommonConstant;
+import com.luoying.luoojbackendcommon.constant.LikeConstant;
 import com.luoying.luoojbackendcommon.constant.RedisKey;
 import com.luoying.luoojbackendcommon.constant.UserConstant;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
@@ -20,9 +21,11 @@ import com.luoying.luoojbackendmodel.dto.question_solution.QuestionSolutionAddRe
 import com.luoying.luoojbackendmodel.dto.question_solution.QuestionSolutionQueryRequest;
 import com.luoying.luoojbackendmodel.dto.question_solution.QuestionSolutionUpdateRequest;
 import com.luoying.luoojbackendmodel.entity.QuestionSolution;
+import com.luoying.luoojbackendmodel.entity.QuestionSolutionCollect;
 import com.luoying.luoojbackendmodel.entity.QuestionSolutionComment;
 import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionSolutionMapper;
+import com.luoying.luoojbackendquestionservice.service.QuestionSolutionCollectService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSolutionCommentService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSolutionService;
 import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
@@ -57,6 +60,9 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
     @Resource
     @Lazy
     private QuestionSolutionCommentService questionSolutionCommentService;
+
+    @Resource
+    private QuestionSolutionCollectService questionSolutionCollectService;
 
     private final static Gson GSON = new Gson();
 
@@ -112,10 +118,14 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
             delete.setId(c.getId());
             questionSolutionCommentService.deleteQuestionSolutionComment(delete, request);
         }
+        // 删除该题解的收藏记录
+        LambdaQueryWrapper<QuestionSolutionCollect> queryWrapper1 = new LambdaQueryWrapper<>();
+        queryWrapper1.eq(QuestionSolutionCollect::getSolutionId, deleteRequest.getId());
+        questionSolutionCollectService.remove(queryWrapper1);
         // 删除题解
         boolean isSuccess = this.removeById(deleteRequest.getId());
         if (isSuccess) { // 删除缓存
-            String key = RedisKey.getKey(LIKE_LIST_KEY, "question_solution", deleteRequest.getId());
+            String key = RedisKey.getKey(LIKE_LIST_KEY, LikeConstant.QUESTION_SOLUTION, deleteRequest.getId());
             stringRedisTemplate.delete(key);
         }
         return isSuccess;
@@ -133,7 +143,7 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
         // 获取登录用户
         User loginUser = userFeignClient.getLoginUser(request);
         // 判断当前登录用户是否已经点赞该题解
-        String key = RedisKey.getKey(LIKE_LIST_KEY, "question_solution", id);
+        String key = RedisKey.getKey(LIKE_LIST_KEY, LikeConstant.QUESTION_SOLUTION, id);
         Boolean isMember = stringRedisTemplate.opsForSet().isMember(key, loginUser.getId().toString());
         if (BooleanUtil.isFalse(isMember)) { // 未点赞
             // 数据库点赞数 +1

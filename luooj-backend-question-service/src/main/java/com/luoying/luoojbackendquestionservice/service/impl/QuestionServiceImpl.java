@@ -12,19 +12,20 @@ import com.google.gson.Gson;
 import com.luoying.luoojbackendcommon.common.DeleteRequest;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.constant.CommonConstant;
+import com.luoying.luoojbackendcommon.constant.LikeConstant;
 import com.luoying.luoojbackendcommon.constant.RedisKey;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
 import com.luoying.luoojbackendcommon.exception.ThrowUtils;
 import com.luoying.luoojbackendcommon.utils.RedisData;
 import com.luoying.luoojbackendcommon.utils.SqlUtils;
 import com.luoying.luoojbackendmodel.dto.question.*;
-import com.luoying.luoojbackendmodel.entity.AcceptedQuestion;
-import com.luoying.luoojbackendmodel.entity.Question;
-import com.luoying.luoojbackendmodel.entity.User;
+import com.luoying.luoojbackendmodel.entity.*;
 import com.luoying.luoojbackendmodel.vo.QuestionVO;
 import com.luoying.luoojbackendmodel.vo.UserVO;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionMapper;
 import com.luoying.luoojbackendquestionservice.service.AcceptedQuestionService;
+import com.luoying.luoojbackendquestionservice.service.QuestionCollectService;
+import com.luoying.luoojbackendquestionservice.service.QuestionCommentService;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +72,13 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
 
     @Resource
     private QuestionMapper questionMapper;
+
+    @Resource
+    @Lazy
+    private QuestionCommentService questionCommentService;
+
+    @Resource
+    private QuestionCollectService questionCollectService;
 
     private final static Gson GSON = new Gson();
 
@@ -173,7 +181,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
      * @return
      */
     @Override
-    public Boolean deleteQuestion(DeleteRequest deleteRequest) {
+    public Boolean deleteQuestion(DeleteRequest deleteRequest, HttpServletRequest request) {
         // 校验
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -182,8 +190,61 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         long id = deleteRequest.getId();
         Question oldQuestion = this.getById(id);
         ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
-        // 删除
-        return this.removeById(id);
+        // 删除该题目下的所有一级评论
+        LambdaQueryWrapper<QuestionComment> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(QuestionComment::getQuestionId, deleteRequest.getId());
+        queryWrapper.eq(QuestionComment::getParentId, 0L);
+        List<QuestionComment> list = questionCommentService.list(queryWrapper);
+        for (QuestionComment c : list) {
+            DeleteRequest delete = new DeleteRequest();
+            delete.setId(c.getId());
+            questionCommentService.deleteQuestionComment(delete, request);
+        }
+        // 删除收藏该题目的记录
+        LambdaQueryWrapper<QuestionCollect> queryWrapper1 = new LambdaQueryWrapper<>();
+        queryWrapper1.eq(QuestionCollect::getQuestionId, deleteRequest.getId());
+        questionCollectService.remove(queryWrapper1);
+        // 删除题目
+        boolean isSuccess = this.removeById(id);
+        // 删除缓存
+        if (isSuccess) {
+            String key = RedisKey.getKey(LIKE_LIST_KEY, LikeConstant.QUESTION_SOLUTION_COMMENT, deleteRequest.getId());
+            stringRedisTemplate.delete(key);
+        }
+        return isSuccess;
+    }
+
+    /**
+     * 点赞题目
+     *
+     * @param id
+     * @param request
+     * @return
+     */
+    @Override
+    public Boolean likeQuestion(Long id, HttpServletRequest request) {
+        // 获取登录用户
+        User loginUser = userFeignClient.getLoginUser(request);
+        // 判断当前登录用户是否已经点赞该题目
+        String key = RedisKey.getKey(LIKE_LIST_KEY, LikeConstant.QUESTION, id);
+        Boolean isMember = stringRedisTemplate.opsForSet().isMember(key, loginUser.getId().toString());
+        if (BooleanUtil.isFalse(isMember)) { // 未点赞
+            // 数据库点赞数 +1
+            boolean isSuccess = update().setSql("likes = likes + 1").eq("id", id).update();
+            if (isSuccess) {
+                // 保存用户到Redis的set集合
+                stringRedisTemplate.opsForSet().add(key, loginUser.getId().toString());
+            }
+            return isSuccess;
+        } else { // 已点赞
+            // 数据库点赞数 -1
+            boolean isSuccess = update().setSql("likes = likes - 1").eq("id", id).update();
+            if (isSuccess) {
+                // 把用户从Redis的set集合移除
+                stringRedisTemplate.opsForSet().remove(key, loginUser.getId().toString());
+            }
+            return isSuccess;
+        }
     }
 
     /**
@@ -344,8 +405,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         long current = questionQueryRequest.getCurrent();
         long size = questionQueryRequest.getPageSize();
         // 查询
-        return this.page(new Page<>(current, size),
-                this.getQueryWrapper(questionQueryRequest));
+        return this.page(new Page<>(current, size), this.getQueryWrapper(questionQueryRequest));
     }
 
     /**
@@ -366,8 +426,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         // 限制爬虫
         ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
         // 查询
-        Page<Question> questionPage = this.page(new Page<>(current, size),
-                this.getQueryWrapper(questionQueryRequest));
+        Page<Question> questionPage = this.page(new Page<>(current, size), this.getQueryWrapper(questionQueryRequest));
         // 获取题目集合
         List<Question> questionList = questionPage.getRecords();
         Page<QuestionVO> questionVOPage = new Page<>(questionPage.getCurrent(), questionPage.getSize(), questionPage.getTotal());
@@ -536,6 +595,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
 
     /**
      * 获取上一道题目
+     *
      * @param questionId
      * @return
      */
@@ -547,6 +607,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
 
     /**
      * 获取下一道题目
+     *
      * @param questionId
      * @return
      */
@@ -558,6 +619,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
 
     /**
      * 随机获取一道题目
+     *
      * @return
      */
     @Override

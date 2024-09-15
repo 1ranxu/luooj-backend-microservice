@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
+
 import lombok.Data;
 
 /**
@@ -59,6 +61,18 @@ public class QuestionComment implements Serializable {
      */
     @TableLogic
     private Integer isDelete;
+
+    /**
+     * 是否点赞过
+     */
+    @TableField(exist = false)
+    private Boolean isLike;
+
+    /**
+     * 子评论列表
+     */
+    @TableField(exist = false)
+    private List<QuestionComment> childList;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

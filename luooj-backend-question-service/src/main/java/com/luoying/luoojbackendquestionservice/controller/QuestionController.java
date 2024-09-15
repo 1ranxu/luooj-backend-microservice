@@ -53,8 +53,20 @@ public class QuestionController {
      */
     @PostMapping("/delete")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> deleteQuestion(@RequestBody DeleteRequest deleteRequest) {
-        return ResultUtils.success(questionService.deleteQuestion(deleteRequest));
+    public BaseResponse<Boolean> deleteQuestion(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
+        return ResultUtils.success(questionService.deleteQuestion(deleteRequest, request));
+    }
+
+    /**
+     * 点赞题目
+     *
+     * @param id
+     * @param request
+     * @return
+     */
+    @PostMapping("/like")
+    public BaseResponse<Boolean> likeQuestion(@RequestParam("id") Long id, HttpServletRequest request) {
+        return ResultUtils.success(questionService.likeQuestion(id, request));
     }
 
     /**
@@ -139,7 +151,7 @@ public class QuestionController {
     @PostMapping("/edit")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> editQuestion(@RequestBody QuestionEditRequest questionEditRequest, HttpServletRequest request) {
-        return ResultUtils.success(questionService.editQuestion(questionEditRequest,request));
+        return ResultUtils.success(questionService.editQuestion(questionEditRequest, request));
     }
 
     /**

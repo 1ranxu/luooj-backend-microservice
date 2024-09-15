@@ -14,14 +14,15 @@ import com.luoying.luoojbackendmodel.vo.QuestionVO;
 import javax.servlet.http.HttpServletRequest;
 
 /**
-* @author 落樱的悔恨
-* @description 针对表【question(题目)】的数据库操作Service
-* @createDate 2023-11-09 16:32:34
-*/
+ * @author 落樱的悔恨
+ * @description 针对表【question(题目)】的数据库操作Service
+ * @createDate 2023-11-09 16:32:34
+ */
 public interface QuestionService extends IService<Question> {
 
     /**
      * 创建题目（仅管理员）
+     *
      * @param questionAddRequest
      * @param request
      * @return
@@ -32,19 +33,30 @@ public interface QuestionService extends IService<Question> {
      * 校验参数
      *
      * @param question 题目
-     * @param add 是否为新增
+     * @param add      是否为新增
      */
     void validQuestion(Question question, boolean add);
 
     /**
      * 删除题目（仅管理员）
+     *
      * @param deleteRequest
      * @return
      */
-    Boolean deleteQuestion(DeleteRequest deleteRequest);
+    Boolean deleteQuestion(DeleteRequest deleteRequest, HttpServletRequest request);
+
+    /**
+     * 点赞题目
+     *
+     * @param id
+     * @param request
+     * @return
+     */
+    Boolean likeQuestion(Long id, HttpServletRequest request);
 
     /**
      * 更新题目（仅管理员）
+     *
      * @param questionUpdateRequest
      * @return
      */
@@ -52,6 +64,7 @@ public interface QuestionService extends IService<Question> {
 
     /**
      * 根据 id 获取题目（仅管理员）
+     *
      * @param id
      * @return
      */
@@ -59,6 +72,7 @@ public interface QuestionService extends IService<Question> {
 
     /**
      * 根据 id 获取封装后的题目
+     *
      * @param id
      * @param request
      * @return
@@ -67,6 +81,7 @@ public interface QuestionService extends IService<Question> {
 
     /**
      * 分页获取题目列表（仅管理员）
+     *
      * @param questionQueryRequest
      * @return
      */
@@ -78,18 +93,19 @@ public interface QuestionService extends IService<Question> {
      * @param questionQueryRequest 题目查询请求
      */
     QueryWrapper<Question> getQueryWrapper(QuestionQueryRequest questionQueryRequest);
-    
+
 
     /**
      * 获取封装后的题目
      *
      * @param question 题目
-     * @param request {@link HttpServletRequest}
+     * @param request  {@link HttpServletRequest}
      */
     QuestionVO getQuestionVO(Question question, HttpServletRequest request);
 
     /**
      * 分页获取封装后的题目
+     *
      * @param questionQueryRequest
      * @param request
      * @return
@@ -98,6 +114,7 @@ public interface QuestionService extends IService<Question> {
 
     /**
      * 更新题目（仅管理员）
+     *
      * @param questionEditRequest
      * @param request
      * @return
@@ -106,12 +123,14 @@ public interface QuestionService extends IService<Question> {
 
     /**
      * 根据题目id查询题目
+     *
      * @param id 题目id
      */
     Question queryById(long id);
 
     /**
      * 获取上一道题目
+     *
      * @param questionId
      * @return
      */
@@ -119,6 +138,7 @@ public interface QuestionService extends IService<Question> {
 
     /**
      * 获取下一道题目
+     *
      * @param questionId
      * @return
      */
@@ -126,8 +146,8 @@ public interface QuestionService extends IService<Question> {
 
     /**
      * 随机获取一道题目
+     *
      * @return
      */
     Long getRandomQuestion();
-
 }

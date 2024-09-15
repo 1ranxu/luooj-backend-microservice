@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.luoying.luoojbackendcommon.common.DeleteRequest;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.constant.CommonConstant;
+import com.luoying.luoojbackendcommon.constant.LikeConstant;
 import com.luoying.luoojbackendcommon.constant.RedisKey;
 import com.luoying.luoojbackendcommon.constant.UserConstant;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
@@ -67,7 +68,7 @@ public class QuestionSolutionCommentServiceImpl extends ServiceImpl<QuestionSolu
         // 拷贝
         QuestionSolutionComment questionSolutionComment = BeanUtil.copyProperties(questionSolutionCommentAddRequest, QuestionSolutionComment.class);
         questionSolutionComment.setUserId(loginUser.getId());
-        // 对应题目的评论总数 +1
+        // 对应题解的评论总数 +1
         boolean isSuccess = questionSolutionService.update().setSql("comments = comments + 1").eq("id", questionSolutionCommentAddRequest.getSolutionId()).update();
         // 写入数据库
         return this.save(questionSolutionComment) && isSuccess;
@@ -95,7 +96,7 @@ public class QuestionSolutionCommentServiceImpl extends ServiceImpl<QuestionSolu
         // 对应题解的评论总数 -1
         questionSolutionService.update().setSql("comments = comments - 1").eq("id", comment.getSolutionId()).update();
         if (isSuccess) {// 删除缓存
-            String key = RedisKey.getKey(LIKE_LIST_KEY, "question_solution_comment", deleteRequest.getId());
+            String key = RedisKey.getKey(LIKE_LIST_KEY, LikeConstant.QUESTION_SOLUTION_COMMENT, deleteRequest.getId());
             stringRedisTemplate.delete(key);
         }
         if (comment.getParentId().longValue() == 0) {
@@ -109,7 +110,7 @@ public class QuestionSolutionCommentServiceImpl extends ServiceImpl<QuestionSolu
             if (isSuccess1) {
                 for (QuestionSolutionComment c : list) {
                     // 删除缓存
-                    String key = RedisKey.getKey(LIKE_LIST_KEY, "question_solution_comment", c.getId());
+                    String key = RedisKey.getKey(LIKE_LIST_KEY, LikeConstant.QUESTION_SOLUTION_COMMENT, c.getId());
                     stringRedisTemplate.delete(key);
                 }
             }
@@ -129,7 +130,7 @@ public class QuestionSolutionCommentServiceImpl extends ServiceImpl<QuestionSolu
         // 获取登录用户
         User loginUser = userFeignClient.getLoginUser(request);
         // 判断当前登录用户是否已经点赞该评论
-        String key = RedisKey.getKey(LIKE_LIST_KEY, "question_solution_comment", id);
+        String key = RedisKey.getKey(LIKE_LIST_KEY, LikeConstant.QUESTION_SOLUTION_COMMENT, id);
         Boolean isMember = stringRedisTemplate.opsForSet().isMember(key, loginUser.getId().toString());
         if (BooleanUtil.isFalse(isMember)) { // 未点赞
             // 数据库点赞数 +1
@@ -160,7 +161,7 @@ public class QuestionSolutionCommentServiceImpl extends ServiceImpl<QuestionSolu
     @Override
     public Boolean isLiked(Long commentId, Long userId) {
         // 判断当前用户是否已经点赞该评论
-        String key = RedisKey.getKey(LIKE_LIST_KEY, "question_solution_comment", commentId);
+        String key = RedisKey.getKey(LIKE_LIST_KEY, LikeConstant.QUESTION_SOLUTION_COMMENT, commentId);
         return stringRedisTemplate.opsForSet().isMember(key, userId.toString());
     }
 

@@ -88,8 +88,9 @@ public class CommentReportServiceImpl extends ServiceImpl<CommentReportMapper, C
             deleteRequest.setId(commentId);
             isSuccess = questionSolutionCommentService.deleteQuestionSolutionComment(deleteRequest, request);
         } else if (QUESTION_COMMENT.getValue().equals(commentDeleteRequest.getCommentType())) {// 删除题目评论
-            // todo questionCommentService中需具体实现
-            isSuccess = questionCommentService.removeById(commentId);
+            DeleteRequest deleteRequest = new DeleteRequest();
+            deleteRequest.setId(commentId);
+            isSuccess = questionCommentService.deleteQuestionComment(deleteRequest, request);
         }
         // 删除本条评论举报记录
         return this.removeById(commentDeleteRequest.getId()) && isSuccess;

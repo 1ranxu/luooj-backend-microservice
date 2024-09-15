@@ -55,6 +55,7 @@ public class QuestionSolutionCollectServiceImpl extends ServiceImpl<QuestionSolu
 
     /**
      * 取消收藏题解
+     *
      * @param id
      * @param request
      * @return
@@ -72,6 +73,12 @@ public class QuestionSolutionCollectServiceImpl extends ServiceImpl<QuestionSolu
         return this.removeById(id);
     }
 
+    /**
+     * 获取条件构造器
+     *
+     * @param questionSolutionCollectQueryRequest
+     * @return
+     */
     @Override
     public QueryWrapper<QuestionSolutionCollect> getQueryWrapper(QuestionSolutionCollectQueryRequest questionSolutionCollectQueryRequest) {
         QueryWrapper<QuestionSolutionCollect> queryWrapper = new QueryWrapper<>();
@@ -97,6 +104,7 @@ public class QuestionSolutionCollectServiceImpl extends ServiceImpl<QuestionSolu
 
     /**
      * 分页获取题解收藏（仅管理员）
+     *
      * @param questionSolutionCollectQueryRequest
      * @return
      */
@@ -112,6 +120,7 @@ public class QuestionSolutionCollectServiceImpl extends ServiceImpl<QuestionSolu
 
     /**
      * 分页获取题解收藏
+     *
      * @param questionSolutionCollectQueryRequest
      * @return
      */
