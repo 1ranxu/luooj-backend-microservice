@@ -75,9 +75,13 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     @Resource
     private MessageProducer messageProducer;
 
+    @Resource
+    private QuestionSubmitMapper questionSubmitMapper;
+
 
     /**
      * 提交题目
+     *
      * @param questionSubmitAddRequest 题目提交创建请求
      * @param request
      * @return
@@ -191,6 +195,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
 
     /**
      * 分页获取封装后的题目提交
+     *
      * @param questionSubmitQueryRequest
      * @param request
      * @return
@@ -203,8 +208,8 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         // 限制爬虫
         ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
         // 查询
-        Page<QuestionSubmit> questionSubmitPage = this.page(new Page<>(current, size),
-                this.getQueryWrapper(questionSubmitQueryRequest));
+        Page<QuestionSubmit> questionSubmitPage = questionSubmitMapper.selectPage(new Page<>(current, size),
+                questionSubmitQueryRequest);
         // 获取题目提交集合
         List<QuestionSubmit> questionSubmitList = questionSubmitPage.getRecords();
         Page<QuestionSubmitVO> questionSubmitVOPage = new Page<>(questionSubmitPage.getCurrent(), questionSubmitPage.getSize(), questionSubmitPage.getTotal());
@@ -245,6 +250,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
 
     /**
      * 在线运行代码
+     *
      * @param runCodeRequest 运行代码请求
      * @return
      */
@@ -274,6 +280,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
 
     /**
      * 获取个人提交详情
+     *
      * @param request
      * @return
      */

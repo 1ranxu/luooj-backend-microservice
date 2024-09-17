@@ -61,16 +61,16 @@ public class QuestionSubmit implements Serializable {
     @TableLogic
     private Integer isDelete;
 
-    @TableField(value = "COUNT(*)", insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER)
+    @TableField(value = "COUNT(*)", insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER, whereStrategy = FieldStrategy.NEVER)
     private Integer count;
 
-    @TableField(value = "COUNT(DISTINCT DATE(createTime))", insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER)
+    @TableField(value = "COUNT(DISTINCT DATE(createTime))", insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER, whereStrategy = FieldStrategy.NEVER)
     private Integer countDay;
 
-    @TableField(value = "DATE_FORMAT(createTime, '%Y')", insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER)
+    @TableField(value = "DATE_FORMAT(createTime, '%Y')", insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER, whereStrategy = FieldStrategy.NEVER)
     private Integer year;
 
-    @TableField(value = "DATE_FORMAT(createTime, '%Y%m%d')", insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER)
+    @TableField(value = "DATE_FORMAT(createTime, '%Y%m%d')", insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER, whereStrategy = FieldStrategy.NEVER)
     private Integer day;
 
     @TableField(exist = false)
