@@ -1,5 +1,6 @@
 package com.luoying.luoojbackenduserservice.service.impl;
 
+import cn.hutool.core.util.BooleanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -30,8 +31,7 @@ import static com.luoying.luoojbackendcommon.constant.RedisKey.FOLLOW_KEY;
  * @createDate 2024-03-16 11:23:33
  */
 @Service
-public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow>
-        implements FollowService {
+public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> implements FollowService {
     @Resource
     private UserService userService;
 
@@ -50,9 +50,9 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow>
         User loginUser = userService.getLoginUser(request);
         Long fansId = loginUser.getId();
         String key = RedisKey.getKey(FOLLOW_KEY, fansId);
-        updateFansAanFollowers(fansId, userId, isFollow);
+        updateFansAandFollowers(fansId, userId, isFollow);
         // 2.判断是关注还是取关
-        if (isFollow) { // 3.关注，新增数据
+        if (BooleanUtil.isTrue(isFollow)) { // 3.关注，新增数据
             Follow follow = new Follow();
             follow.setFansId(fansId);
             follow.setUserId(userId);
@@ -86,11 +86,22 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow>
         // 1.获取登录用户
         User loginUser = userService.getLoginUser(request);
         Long fansId = loginUser.getId();
-        // 2.查询是否关注
-        LambdaQueryWrapper<Follow> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Follow::getUserId, userId).eq(Follow::getFansId, fansId);
-        Follow follow = this.getOne(queryWrapper);
-        return follow == null ? false : true;
+        String key = RedisKey.getKey(FOLLOW_KEY, fansId);
+        Boolean isMember = stringRedisTemplate.opsForSet().isMember(key, userId.toString());
+        if (BooleanUtil.isTrue(isMember)) { // 缓存存在直接返回
+            return true;
+        } else {
+            // 缓存不存在，查询数据库
+            LambdaQueryWrapper<Follow> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Follow::getUserId, userId).eq(Follow::getFansId, fansId);
+            Follow follow = this.getOne(queryWrapper);
+            if (follow == null) {
+                return false;
+            } else {
+                stringRedisTemplate.opsForSet().add(key, userId.toString());
+                return true;
+            }
+        }
     }
 
     /**
@@ -118,6 +129,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow>
 
     /**
      * 获取当前登录用户的关注列表
+     *
      * @param followQueryRequest
      * @param request
      * @return
@@ -136,12 +148,12 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow>
         List<Long> followIdList = page.getRecords().stream().map(follow -> follow.getUserId()).collect(Collectors.toList());
         // 3.返回
         Page<UserVO> resultPage = new Page<>();
-        if(followIdList == null || followIdList.size() == 0){
+        if (followIdList == null || followIdList.size() == 0) {
             resultPage.setTotal(page.getTotal());
             resultPage.setRecords(Collections.emptyList());
             resultPage.setCurrent(current);
             resultPage.setSize(pageSize);
-        }else{
+        } else {
             List<User> userList = userService.listByIds(followIdList);
             List<UserVO> userVOList = userList.stream().map(user -> userService.getUserVO(user)).collect(Collectors.toList());
             resultPage.setTotal(page.getTotal());
@@ -154,6 +166,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow>
 
     /**
      * 获取当前登录用户的粉丝列表
+     *
      * @param fansQueryRequest
      * @param request
      * @return
@@ -173,12 +186,12 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow>
         // 3.返回
 
         Page<UserVO> resultPage = new Page<>();
-        if(fansIdList == null || fansIdList.size() == 0){
+        if (fansIdList == null || fansIdList.size() == 0) {
             resultPage.setTotal(page.getTotal());
             resultPage.setRecords(Collections.emptyList());
             resultPage.setCurrent(current);
             resultPage.setSize(pageSize);
-        }else{
+        } else {
             List<User> userList = userService.listByIds(fansIdList);
             List<UserVO> userVOList = userList.stream().map(user -> userService.getUserVO(user)).collect(Collectors.toList());
             resultPage.setTotal(page.getTotal());
@@ -196,7 +209,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow>
      * @param userId
      * @param isFollow
      */
-    public void updateFansAanFollowers(Long fansId, Long userId, Boolean isFollow) {
+    public void updateFansAandFollowers(Long fansId, Long userId, Boolean isFollow) {
         User fans = userService.getById(fansId);
         User user = userService.getById(userId);
         if (isFollow) {

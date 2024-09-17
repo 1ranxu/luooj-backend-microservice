@@ -1,22 +1,21 @@
-package com.luoying.luoojbackendmodel.entity;
+package com.luoying.luoojbackendmodel.dto.contest;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
-import lombok.Data;
+import java.util.Map;
 
 /**
- * 竞赛表
- * @TableName contest
+ * @Author 落樱的悔恨
+ * @Date 2024/9/16 15:02
  */
-@TableName(value ="contest")
 @Data
-public class Contest implements Serializable {
+public class ContestUpdateRequest implements Serializable {
     /**
      * 竞赛id
      */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -27,11 +26,13 @@ public class Contest implements Serializable {
     /**
      * 开始时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     private Date startTime;
 
     /**
      * 结束时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     private Date endTime;
 
     /**
@@ -51,41 +52,15 @@ public class Contest implements Serializable {
 
     /**
      * 题目列表（json 数组）
+     * key：题目id
+     * value：分数
      */
-    private String questions;
-
-    /**
-     * 创建用户 id
-     */
-    private Long userId;
+    private Map<Long, Integer> questions;
 
     /**
      * 状态（0-待开始、1-进行中、2-已结束）
      */
     private Integer status;
 
-    /**
-     * 创建时间
-     */
-    private Date createTime;
-
-    /**
-     * 更新时间
-     */
-    private Date updateTime;
-
-    /**
-     * 是否删除
-     */
-    @TableLogic
-    private Integer isDelete;
-
-    /**
-     * 是否报名
-     */
-    @TableField(exist = false)
-    private Boolean isApply;
-
-    @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

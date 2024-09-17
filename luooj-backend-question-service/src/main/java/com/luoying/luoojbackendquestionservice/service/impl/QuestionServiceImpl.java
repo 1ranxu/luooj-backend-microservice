@@ -80,7 +80,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
     @Resource
     private QuestionCollectService questionCollectService;
 
-    private final static Gson GSON = new Gson();
+    private static final Gson GSON = new Gson();
 
     @Resource
     private ThreadPoolExecutor threadPoolExecutor;
