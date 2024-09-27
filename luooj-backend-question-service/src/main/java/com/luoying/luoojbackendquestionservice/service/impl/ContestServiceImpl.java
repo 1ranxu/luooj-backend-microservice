@@ -2,26 +2,38 @@ package com.luoying.luoojbackendquestionservice.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
+import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.constant.CommonConstant;
+import com.luoying.luoojbackendcommon.constant.RedisKey;
+import com.luoying.luoojbackendcommon.exception.ThrowUtils;
 import com.luoying.luoojbackendcommon.utils.SqlUtils;
 import com.luoying.luoojbackendmodel.dto.contest.ContestAddRequest;
 import com.luoying.luoojbackendmodel.dto.contest.ContestQueryRequest;
 import com.luoying.luoojbackendmodel.dto.contest.ContestUpdateRequest;
 import com.luoying.luoojbackendmodel.entity.Contest;
+import com.luoying.luoojbackendmodel.entity.ContestApply;
+import com.luoying.luoojbackendmodel.entity.ContestResult;
 import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendquestionservice.mapper.ContestMapper;
 import com.luoying.luoojbackendquestionservice.service.ContestApplyService;
+import com.luoying.luoojbackendquestionservice.service.ContestResultService;
 import com.luoying.luoojbackendquestionservice.service.ContestService;
 import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
 import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+
+import static com.luoying.luoojbackendcommon.constant.RedisKey.CONTEST_APPLY_KEY;
+import static com.luoying.luoojbackendcommon.constant.RedisKey.CONTEST_RANK_KEY;
 
 /**
  * @author 落樱的悔恨
@@ -35,6 +47,13 @@ public class ContestServiceImpl extends ServiceImpl<ContestMapper, Contest> impl
 
     @Resource
     private ContestApplyService contestApplyService;
+
+    @Resource
+    @Lazy
+    private ContestResultService contestResultService;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     private static final Gson GSON = new Gson();
 
@@ -67,6 +86,23 @@ public class ContestServiceImpl extends ServiceImpl<ContestMapper, Contest> impl
      */
     @Override
     public Boolean deleteContest(Long id) {
+        // 删除报名信息
+        LambdaQueryWrapper<ContestApply> queryWrapper1 = new LambdaQueryWrapper<>();
+        queryWrapper1.eq(ContestApply::getContestId, id);
+        boolean isSuccess1 = contestApplyService.remove(queryWrapper1);
+        if (isSuccess1) {// 删除缓存
+            String key = RedisKey.getKey(CONTEST_APPLY_KEY, id);
+            stringRedisTemplate.delete(key);
+        }
+        // 删除比赛结果
+        LambdaQueryWrapper<ContestResult> queryWrapper2 = new LambdaQueryWrapper<>();
+        queryWrapper2.eq(ContestResult::getContestId, id);
+        boolean isSuccess2 = contestResultService.remove(queryWrapper2);
+        if (isSuccess2) {// 删除缓存
+            String key = RedisKey.getKey(CONTEST_RANK_KEY, id);
+            stringRedisTemplate.delete(key);
+        }
+        // 删除竞赛
         return this.removeById(id);
     }
 
@@ -141,6 +177,8 @@ public class ContestServiceImpl extends ServiceImpl<ContestMapper, Contest> impl
         // 获取分页参数
         long current = contestQueryRequest.getCurrent();
         long size = contestQueryRequest.getPageSize();
+        // 限制爬虫
+        ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
         // 查询
         Page<Contest> page = this.page(new Page<>(current, size), this.getQueryWrapper(contestQueryRequest));
         User loginUser = userFeignClient.getLoginUser(request);

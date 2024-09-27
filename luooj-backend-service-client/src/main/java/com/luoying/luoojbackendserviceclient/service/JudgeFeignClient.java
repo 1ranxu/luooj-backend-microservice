@@ -2,6 +2,8 @@ package com.luoying.luoojbackendserviceclient.service;
 
 import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeRequest;
 import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeResponse;
+import com.luoying.luoojbackendmodel.dto.contest_result.ContestQuestionSubmit;
+import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitJudgeInfo;
 import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,11 +17,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient(name = "luooj-backend-judge-service", path = "/api/judge/inner")
 public interface JudgeFeignClient {
     /**
-     * 判题
+     * 普通判题
+     *
      * @param questionSubmitId 题目提交id
      */
-    @PostMapping("/do")
-    QuestionSubmitVO doJudge(@RequestParam("questionSubmitId") long questionSubmitId);
+    @PostMapping("/common")
+    QuestionSubmitVO commonJudge(@RequestParam("questionSubmitId") long questionSubmitId);
+
+    /**
+     * 竞赛判题
+     * @param contestQuestionSubmit
+     * @return
+     */
+    @PostMapping("/contest")
+    public QuestionSubmitJudgeInfo contestJudge(@RequestBody ContestQuestionSubmit contestQuestionSubmit);
 
     /**
      * 在线运行

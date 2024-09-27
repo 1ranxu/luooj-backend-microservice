@@ -1,11 +1,13 @@
 package com.luoying.luoojbackendjudgeservice.judge.controller.inner;
 
-import com.luoying.luoojbackendjudgeservice.judge.JudgeService;
+import com.luoying.luoojbackendjudgeservice.judge.service.JudgeService;
 import com.luoying.luoojbackendjudgeservice.judge.sandbox.CodeSandBox;
-import com.luoying.luoojbackendjudgeservice.judge.sandbox.CodeSandBoxFactory;
-import com.luoying.luoojbackendjudgeservice.judge.sandbox.CodeSandBoxProxy;
+import com.luoying.luoojbackendjudgeservice.judge.sandbox.factory.CodeSandBoxFactory;
+import com.luoying.luoojbackendjudgeservice.judge.sandbox.proxy.CodeSandBoxProxy;
 import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeRequest;
 import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeResponse;
+import com.luoying.luoojbackendmodel.dto.contest_result.ContestQuestionSubmit;
+import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitJudgeInfo;
 import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
 import com.luoying.luoojbackendserviceclient.service.JudgeFeignClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,14 +29,25 @@ public class JudgeInnerController implements JudgeFeignClient {
     private String type;
 
     /**
-     * 判题
+     * 普通判题
      *
      * @param questionSubmitId 题目提交id
      */
     @Override
-    @PostMapping("/do")
-    public QuestionSubmitVO doJudge(@RequestParam("questionSubmitId") long questionSubmitId) {
+    @PostMapping("/common")
+    public QuestionSubmitVO commonJudge(@RequestParam("questionSubmitId") long questionSubmitId) {
         return judgeService.doJudge(questionSubmitId);
+    }
+
+    /**
+     * 竞赛判题
+     * @param contestQuestionSubmit
+     * @return
+     */
+    @Override
+    @PostMapping("/contest")
+    public QuestionSubmitJudgeInfo contestJudge(@RequestBody ContestQuestionSubmit contestQuestionSubmit) {
+        return judgeService.doJudge(contestQuestionSubmit);
     }
 
     /**

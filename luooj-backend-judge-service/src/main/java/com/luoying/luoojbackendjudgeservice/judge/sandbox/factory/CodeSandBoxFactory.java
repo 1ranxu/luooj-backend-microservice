@@ -1,5 +1,6 @@
-package com.luoying.luoojbackendjudgeservice.judge.sandbox;
+package com.luoying.luoojbackendjudgeservice.judge.sandbox.factory;
 
+import com.luoying.luoojbackendjudgeservice.judge.sandbox.CodeSandBox;
 import com.luoying.luoojbackendjudgeservice.judge.sandbox.impl.RemoteCodeSandBox;
 import com.luoying.luoojbackendjudgeservice.judge.sandbox.impl.ThirdPartyCodeSandBox;
 

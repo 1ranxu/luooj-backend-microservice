@@ -1,6 +1,7 @@
-package com.luoying.luoojbackendjudgeservice.judge.sandbox;
+package com.luoying.luoojbackendjudgeservice.judge.sandbox.proxy;
 
 
+import com.luoying.luoojbackendjudgeservice.judge.sandbox.CodeSandBox;
 import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeRequest;
 import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeResponse;
 import lombok.extern.slf4j.Slf4j;

@@ -21,13 +21,13 @@ public class ContestAddRequest implements Serializable {
     /**
      * 开始时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date startTime;
 
     /**
      * 结束时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date endTime;
 
     /**
@@ -47,10 +47,10 @@ public class ContestAddRequest implements Serializable {
 
     /**
      * 题目列表（json 数组）
-     * key：题目id
-     * value：分数
+     * key：题目顺序
+     * value：竞赛题目
      */
-    private Map<Long, Integer> questions;
+    private Map<Integer, ContestQuestion> questions;
 
 
     /**

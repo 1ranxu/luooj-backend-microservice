@@ -1,4 +1,4 @@
-package com.luoying.luoojbackendjudgeservice.judge.strategy;
+package com.luoying.luoojbackendjudgeservice.judge.strategy.context;
 
 import com.luoying.luoojbackendmodel.dto.question.QuestionJudgeCase;
 import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitJudgeInfo;
@@ -41,7 +41,7 @@ public class JudgeContext {
     private QuestionSubmitJudgeInfo judgeInfo;
 
     /**
-     * 题目提交
+     * 编程语言
      */
-    private QuestionSubmit questionSubmit;
+    private String language;
 }

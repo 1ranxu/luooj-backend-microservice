@@ -2,7 +2,7 @@ package com.luoying.luoojbackendjudgeservice.rabbitmq;
 
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
-import com.luoying.luoojbackendjudgeservice.judge.JudgeService;
+import com.luoying.luoojbackendjudgeservice.judge.service.JudgeService;
 import com.luoying.luoojbackendmodel.entity.Question;
 import com.luoying.luoojbackendmodel.entity.QuestionSubmit;
 import com.luoying.luoojbackendmodel.enums.JudgeInfoMessagenum;
