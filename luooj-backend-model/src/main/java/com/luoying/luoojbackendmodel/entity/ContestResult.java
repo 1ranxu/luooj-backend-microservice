@@ -41,11 +41,6 @@ public class ContestResult implements Serializable {
     private Integer totalScore;
 
     /**
-     * 所有题目的总耗时(s)
-     */
-    private Integer totalTime;
-
-    /**
      * 竞赛详情（json）
      */
     private String contestDetail;

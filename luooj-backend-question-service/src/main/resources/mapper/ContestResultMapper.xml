@@ -10,7 +10,6 @@
             <result property="applicantId" column="applicantId" jdbcType="BIGINT"/>
             <result property="userName" column="userName" jdbcType="VARCHAR"/>
             <result property="totalScore" column="totalScore" jdbcType="INTEGER"/>
-            <result property="totalTime" column="totalTime" jdbcType="INTEGER"/>
             <result property="contestDetail" column="contestDetail" jdbcType="VARCHAR"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
@@ -19,8 +18,7 @@
 
     <sql id="Base_Column_List">
         id,contestId,applicantId,
-        userName,totalScore,totalTime,
-        contestDetail,createTime,updateTime,
-        isDelete
+        userName,totalScore,contestDetail,
+        createTime,updateTime,isDelete
     </sql>
 </mapper>
