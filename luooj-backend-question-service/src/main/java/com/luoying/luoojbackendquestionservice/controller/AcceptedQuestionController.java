@@ -46,12 +46,13 @@ public class AcceptedQuestionController {
 
     /**
      * 判断当前用户是否通过了某道题目
+     *
      * @param questionId
      * @param request
      * @return
      */
     @GetMapping("/isAccepted")
-    public BaseResponse<Boolean> isisAccepted(@RequestParam("questionId") Long questionId, HttpServletRequest request){
-        return ResultUtils.success(acceptedQuestionService.isisAccepted(questionId, request));
+    public BaseResponse<Boolean> isAccepted(@RequestParam("questionId") Long questionId, HttpServletRequest request) {
+        return ResultUtils.success(acceptedQuestionService.isAccepted(questionId, request));
     }
 }

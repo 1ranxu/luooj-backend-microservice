@@ -49,6 +49,12 @@ public class AcceptedQuestionServiceImpl extends ServiceImpl<AcceptedQuestionMap
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    /**
+     * 获取用户通过题目的详情
+     *
+     * @param request
+     * @return
+     */
     @Override
     public AcceptedQuestionDetailVO getAcceptedQuestionDetail(HttpServletRequest request) {
         // 1.获取登录用户的id
@@ -112,6 +118,12 @@ public class AcceptedQuestionServiceImpl extends ServiceImpl<AcceptedQuestionMap
         return acceptedQuestionDetailVO;
     }
 
+    /**
+     * 获取用户的排名（通过题目数量）
+     *
+     * @param request
+     * @return
+     */
     @Override
     public Long getAcceptedQuestionRanking(HttpServletRequest request) {
         User loginUser = userFeignClient.getLoginUser(request);
@@ -138,7 +150,7 @@ public class AcceptedQuestionServiceImpl extends ServiceImpl<AcceptedQuestionMap
      * @return
      */
     @Override
-    public Boolean isisAccepted(Long questionId, HttpServletRequest request) {
+    public Boolean isAccepted(Long questionId, HttpServletRequest request) {
         // 获取登录用户
         User loginUser = userFeignClient.getLoginUser(request);
         // 构造条件
