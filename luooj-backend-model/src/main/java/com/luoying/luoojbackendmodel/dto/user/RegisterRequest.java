@@ -10,16 +10,31 @@ import java.io.Serializable;
  * @author 落樱的悔恨
  */
 @Data
-public class UserEmailRegisterRequest implements Serializable {
+public class RegisterRequest implements Serializable {
     /**
      * 用户昵称
      */
     private String userName;
 
     /**
+     * 账号
+     */
+    private String userAccount;
+
+    /**
+     * 密码
+     */
+    private String userPassword;
+
+    /**
+     * 确认密码
+     */
+    private String checkPassword;
+
+    /**
      * 邮箱
      */
-    private String emailAccount;
+    private String email;
 
     /**
      * 验证码

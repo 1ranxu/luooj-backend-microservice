@@ -12,7 +12,7 @@ public class UserBindEmailRequest implements Serializable {
     /**
      * 邮箱
      */
-    private String emailAccount;
+    private String email;
 
     /**
      * 验证码

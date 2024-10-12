@@ -10,12 +10,6 @@ import java.io.Serializable;
  */
 @Data
 public class UserUpdateMyRequest implements Serializable {
-
-    /**
-     * 用户密码
-     */
-    private String userPassword;
-
     /**
      * 邮箱
      */

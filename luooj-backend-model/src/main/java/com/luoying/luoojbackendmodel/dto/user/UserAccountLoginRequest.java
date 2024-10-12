@@ -6,10 +6,10 @@ import java.io.Serializable;
 
 /**
  * @author 落樱的悔恨
- * 用户注册请求体
+ * 用户登录请求
  */
 @Data
-public class UserRegisterRequest implements Serializable {
+public class UserAccountLoginRequest implements Serializable {
 
     private static final long serialVersionUID = 3191241716373120793L;
 
@@ -22,9 +22,4 @@ public class UserRegisterRequest implements Serializable {
      * 密码
      */
     private String userPassword;
-
-    /**
-     * 确认密码
-     */
-    private String checkPassword;
 }

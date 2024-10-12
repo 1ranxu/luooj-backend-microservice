@@ -34,4 +34,26 @@ public interface EmailConstant {
      * 平台地址
      */
     String PLATFORM_ADDRESS = "<a href='http://luooj.icu/'>请联系我们</a>";
+
+    /**
+     * 注册操作
+     */
+    String REGISTER = "REGISTER";
+
+
+    /**
+     * 登录操作
+     */
+    String LOGIN = "LOGIN";
+
+    /**
+     * 更新密码操作
+     */
+    String UPDATE_PASSWORD = "UPDATE_PASSWORD";
+
+    /**
+     * 更新邮箱操作
+     */
+    String UPDATE_EMAIL = "UPDATE_EMAIL";
+
 }

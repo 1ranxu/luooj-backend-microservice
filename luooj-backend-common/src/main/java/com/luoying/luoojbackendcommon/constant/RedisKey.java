@@ -18,12 +18,6 @@ public class RedisKey {
     public static final long LOCK_QUESTION_KEY_TTL = 20L;
 
     /**
-     * 邮箱验证码的key和过期时间
-     */
-    public static final String EMAIL_CAPTCHA_KEY = "user_service:email_captcha:%s";
-    public static final long EMAIL_CAPTCHA_KEY_TTL = 5L;
-
-    /**
      * 注册操作时邮箱验证码的key和过期时间
      */
     public static final String REGISTER_EMAIL_CAPTCHA_KEY = "user_service:email_captcha:register:%s";
