@@ -31,5 +31,17 @@
            <if test="questionSubmitQueryRequest.userId != null">and userId = #{questionSubmitQueryRequest.userId}</if>
            <if test="questionSubmitQueryRequest.status != null">and status = #{questionSubmitQueryRequest.status}</if>
         </where>
+        <choose>
+            <when test="questionSubmitQueryRequest.sortField != null and questionSubmitQueryRequest.sortOrder == 'descend'">
+                order by ${questionSubmitQueryRequest.sortField} desc
+            </when>
+            <when test="questionSubmitQueryRequest.sortField != null and questionSubmitQueryRequest.sortOrder == 'ascend'">
+                order by ${questionSubmitQueryRequest.sortField} asc
+            </when>
+            <!-- 可以在这里添加默认排序 -->
+            <otherwise>
+                order by createTime
+            </otherwise>
+        </choose>
     </select>
 </mapper>
