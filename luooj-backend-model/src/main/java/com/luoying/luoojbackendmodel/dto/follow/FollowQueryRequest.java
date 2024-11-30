@@ -14,4 +14,14 @@ import java.io.Serializable;
 @Data
 public class FollowQueryRequest extends PageRequest implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 账号
+     */
+    private String userAccount;
+
+    /**
+     * 用户昵称
+     */
+    private String userName;
 }

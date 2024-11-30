@@ -2,9 +2,12 @@ package com.luoying.luoojbackenduserservice.service.impl;
 
 import cn.hutool.core.util.BooleanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.luoying.luoojbackendcommon.constant.CommonConstant;
 import com.luoying.luoojbackendcommon.constant.RedisKey;
+import com.luoying.luoojbackendcommon.utils.SqlUtils;
 import com.luoying.luoojbackendmodel.dto.follow.FansQueryRequest;
 import com.luoying.luoojbackendmodel.dto.follow.FollowQueryRequest;
 import com.luoying.luoojbackendmodel.entity.Follow;
@@ -13,6 +16,7 @@ import com.luoying.luoojbackendmodel.vo.UserVO;
 import com.luoying.luoojbackenduserservice.mapper.FollowMapper;
 import com.luoying.luoojbackenduserservice.service.FollowService;
 import com.luoying.luoojbackenduserservice.service.UserService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -154,7 +158,16 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
             resultPage.setCurrent(current);
             resultPage.setSize(pageSize);
         } else {
-            List<User> userList = userService.listByIds(followIdList);
+            String userAccount = followQueryRequest.getUserAccount();
+            String userName = followQueryRequest.getUserName();
+            String sortField = followQueryRequest.getSortField();
+            String sortOrder = followQueryRequest.getSortOrder();
+            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+            queryWrapper.like(StringUtils.isNotBlank(userAccount), "userAccount", userAccount);
+            queryWrapper.like(StringUtils.isNotBlank(userName), "userName", userName);
+            queryWrapper.in("id", followIdList);
+            queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
+            List<User> userList = userService.list(queryWrapper);
             List<UserVO> userVOList = userList.stream().map(user -> userService.getUserVO(user)).collect(Collectors.toList());
             resultPage.setTotal(page.getTotal());
             resultPage.setRecords(userVOList);
@@ -184,7 +197,6 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         Page<Follow> page = this.page(new Page<>(current, pageSize), wrapper);
         List<Long> fansIdList = page.getRecords().stream().map(follow -> follow.getFansId()).collect(Collectors.toList());
         // 3.返回
-
         Page<UserVO> resultPage = new Page<>();
         if (fansIdList == null || fansIdList.size() == 0) {
             resultPage.setTotal(page.getTotal());
@@ -192,7 +204,16 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
             resultPage.setCurrent(current);
             resultPage.setSize(pageSize);
         } else {
-            List<User> userList = userService.listByIds(fansIdList);
+            String userAccount = fansQueryRequest.getUserAccount();
+            String userName = fansQueryRequest.getUserName();
+            String sortField = fansQueryRequest.getSortField();
+            String sortOrder = fansQueryRequest.getSortOrder();
+            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+            queryWrapper.like(StringUtils.isNotBlank(userAccount), "userAccount", userAccount);
+            queryWrapper.like(StringUtils.isNotBlank(userName), "userName", userName);
+            queryWrapper.in("id", fansIdList);
+            queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
+            List<User> userList = userService.list(queryWrapper);
             List<UserVO> userVOList = userList.stream().map(user -> userService.getUserVO(user)).collect(Collectors.toList());
             resultPage.setTotal(page.getTotal());
             resultPage.setRecords(userVOList);

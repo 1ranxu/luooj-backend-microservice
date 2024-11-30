@@ -789,8 +789,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = new User();
         user.setId(loginUser.getId());
         user.setEmail("");
-        boolean bindEmailResult = this.updateById(user);
-        if (!bindEmailResult) {
+        boolean unBindEmailResult = this.updateById(user);
+        if (!unBindEmailResult) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "邮箱解绑失败,请稍后再试！");
         }
         loginUser.setEmail("");

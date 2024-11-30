@@ -70,7 +70,7 @@ public class FollowController {
      * @param request
      * @return
      */
-    @GetMapping("/get/follow/page")
+    @PostMapping("/get/follow/page")
     public BaseResponse<Page<UserVO>> getFollowPage(@RequestBody FollowQueryRequest followQueryRequest, HttpServletRequest request) {
         return ResultUtils.success(followService.getFollowPage(followQueryRequest, request));
     }
@@ -81,10 +81,9 @@ public class FollowController {
      * @param request
      * @return
      */
-    @GetMapping("/get/fans/page")
+    @PostMapping("/get/fans/page")
     public BaseResponse<Page<UserVO>> getFansPage(@RequestBody FansQueryRequest fansQueryRequest, HttpServletRequest request) {
         return ResultUtils.success(followService.getFansPage(fansQueryRequest, request));
     }
-
 
 }
