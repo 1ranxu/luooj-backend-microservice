@@ -128,7 +128,7 @@ public class QuestionListServiceImpl extends ServiceImpl<QuestionListMapper, Que
         String sortOrder = questionListQueryRequest.getSortOrder();
         // 拼接查询条件
         queryWrapper.eq(ObjectUtils.isNotEmpty(id), "id", id);
-        queryWrapper.eq(StrUtil.isNotBlank(title), "title", title);
+        queryWrapper.like(StrUtil.isNotBlank(title), "title", title);
         queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
         // 返回

@@ -6,7 +6,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.luoying.luoojbackendmodel.dto.question_collect.QuestionCollectAddRequest;
 import com.luoying.luoojbackendmodel.dto.question_collect.QuestionCollectDeleteRequest;
 import com.luoying.luoojbackendmodel.dto.question_collect.QuestionCollectQueryRequest;
+import com.luoying.luoojbackendmodel.dto.question_list.QuestionListQueryRequest;
 import com.luoying.luoojbackendmodel.entity.QuestionCollect;
+import com.luoying.luoojbackendmodel.vo.QuestionCollectByUserAllQuestionListDetail;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -34,6 +36,14 @@ public interface QuestionCollectService extends IService<QuestionCollect> {
      * @return
      */
     Boolean deleteQuestionCollect(QuestionCollectDeleteRequest questionCollectDeleteRequest, HttpServletRequest request);
+
+    /**
+     * 获取用户所有题单对某道题目的收藏情况
+     * @param questionListQueryRequest
+     * @param questionId
+     * @return
+     */
+    QuestionCollectByUserAllQuestionListDetail isQuestionCollectedByUserAllQuestionList(QuestionListQueryRequest questionListQueryRequest, Long questionId);
 
     /**
      * 获取题目收藏记录

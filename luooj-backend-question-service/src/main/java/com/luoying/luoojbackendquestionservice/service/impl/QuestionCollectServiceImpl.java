@@ -14,9 +14,12 @@ import com.luoying.luoojbackendcommon.utils.SqlUtils;
 import com.luoying.luoojbackendmodel.dto.question_collect.QuestionCollectAddRequest;
 import com.luoying.luoojbackendmodel.dto.question_collect.QuestionCollectDeleteRequest;
 import com.luoying.luoojbackendmodel.dto.question_collect.QuestionCollectQueryRequest;
+import com.luoying.luoojbackendmodel.dto.question_list.QuestionListQueryRequest;
 import com.luoying.luoojbackendmodel.entity.QuestionCollect;
 import com.luoying.luoojbackendmodel.entity.QuestionList;
 import com.luoying.luoojbackendmodel.entity.User;
+import com.luoying.luoojbackendmodel.vo.QuestionCollectByUserAllQuestionListDetail;
+import com.luoying.luoojbackendmodel.vo.QuestionListVO;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionCollectMapper;
 import com.luoying.luoojbackendquestionservice.service.QuestionCollectService;
 import com.luoying.luoojbackendquestionservice.service.QuestionListService;
@@ -26,6 +29,9 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * @author 落樱的悔恨
@@ -82,6 +88,55 @@ public class QuestionCollectServiceImpl extends ServiceImpl<QuestionCollectMappe
         queryWrapper.eq(QuestionCollect::getQuestionListId, questionCollectDeleteRequest.getQuestionListId());
         queryWrapper.eq(QuestionCollect::getQuestionId, questionCollectDeleteRequest.getQuestionId());
         return this.remove(queryWrapper);
+    }
+
+    /**
+     * 获取用户所有题单对某道题目的收藏情况
+     * @param questionListQueryRequest
+     * @param questionId
+     * @return
+     */
+    @Override
+    public QuestionCollectByUserAllQuestionListDetail isQuestionCollectedByUserAllQuestionList(QuestionListQueryRequest questionListQueryRequest, Long questionId) {
+        // 根据userId查询用户创建的题单
+        QueryWrapper<QuestionList> questionListQueryWrapper = questionListService.getQueryWrapper(questionListQueryRequest);
+        long current = questionListQueryRequest.getCurrent();
+        long pageSize = questionListQueryRequest.getPageSize();
+        Page<QuestionList> questionListPage = new Page<>(current, pageSize);
+        questionListService.page(questionListPage, questionListQueryWrapper);
+        // 用于存储用户是否收藏某道题目
+        AtomicReference<Boolean> isQuestionCollect = new AtomicReference<>(false);
+        // 依次判断每个题单是否收藏某道题目
+        List<QuestionListVO> questionListVOList = questionListPage.getRecords().stream().map(questionList -> {
+            // 将questionList对象拷贝给VO对象
+            QuestionListVO questionListVO = new QuestionListVO();
+            BeanUtil.copyProperties(questionList, questionListVO);
+            // 查询该题单是否收藏某道题目
+            LambdaQueryWrapper<QuestionCollect> questionCollectQueryWrapper = new LambdaQueryWrapper<>();
+            questionCollectQueryWrapper.eq(QuestionCollect::getQuestionId, questionId);
+            questionCollectQueryWrapper.eq(QuestionCollect::getQuestionListId, questionList.getId());
+            QuestionCollect questionCollect = this.getOne(questionCollectQueryWrapper);
+            // 设置该题单是否收藏某道题目
+            if (questionCollect != null) {
+                questionListVO.setIsCollect(true);
+                isQuestionCollect.set(true);
+            }else{
+                questionListVO.setIsCollect(false);
+            }
+            return questionListVO;
+        }).collect(Collectors.toList());
+        // 封装分页对象
+        Page<QuestionListVO> questionListVOPage = new Page<>();
+        questionListVOPage.setRecords(questionListVOList);
+        questionListVOPage.setTotal(questionListPage.getTotal());
+        questionListVOPage.setCurrent(current);
+        questionListVOPage.setPages(pageSize);
+        // 封装详情对象
+        QuestionCollectByUserAllQuestionListDetail questionCollectByUserAllQuestionListDetail = new QuestionCollectByUserAllQuestionListDetail();
+        questionCollectByUserAllQuestionListDetail.setIsCollect(isQuestionCollect.get());
+        questionCollectByUserAllQuestionListDetail.setQuestionListVOPage(questionListVOPage);
+        // 返回
+        return questionCollectByUserAllQuestionListDetail;
     }
 
     /**

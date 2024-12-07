@@ -8,7 +8,9 @@ import com.luoying.luoojbackendcommon.constant.UserConstant;
 import com.luoying.luoojbackendmodel.dto.question_collect.QuestionCollectAddRequest;
 import com.luoying.luoojbackendmodel.dto.question_collect.QuestionCollectDeleteRequest;
 import com.luoying.luoojbackendmodel.dto.question_collect.QuestionCollectQueryRequest;
+import com.luoying.luoojbackendmodel.dto.question_list.QuestionListQueryRequest;
 import com.luoying.luoojbackendmodel.entity.QuestionCollect;
+import com.luoying.luoojbackendmodel.vo.QuestionCollectByUserAllQuestionListDetail;
 import com.luoying.luoojbackendquestionservice.service.QuestionCollectService;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,6 +49,17 @@ public class QuestionCollectController {
     @PostMapping("/delete")
     public BaseResponse<Boolean> deleteQuestionCollect(@RequestBody QuestionCollectDeleteRequest questionCollectDeleteRequest, HttpServletRequest request) {
         return ResultUtils.success(questionCollectService.deleteQuestionCollect(questionCollectDeleteRequest, request));
+    }
+
+    /**
+     * 获取用户所有题单对某道题目的收藏情况
+     * @param questionListQueryRequest
+     * @param questionId
+     * @return
+     */
+    @PostMapping("/isQuestionCollectedByUserAllQuestionList")
+    public BaseResponse<QuestionCollectByUserAllQuestionListDetail> isQuestionCollectedByUserAllQuestionList(@RequestBody QuestionListQueryRequest questionListQueryRequest, @RequestParam("questionId") Long questionId) {
+        return ResultUtils.success(questionCollectService.isQuestionCollectedByUserAllQuestionList(questionListQueryRequest, questionId));
     }
 
     /**
