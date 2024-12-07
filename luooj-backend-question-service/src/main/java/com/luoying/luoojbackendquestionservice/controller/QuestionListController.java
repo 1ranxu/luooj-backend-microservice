@@ -9,6 +9,7 @@ import com.luoying.luoojbackendmodel.dto.question_list.QuestionListAddRequest;
 import com.luoying.luoojbackendmodel.dto.question_list.QuestionListQueryRequest;
 import com.luoying.luoojbackendmodel.dto.question_list.QuestionListUpdateRequest;
 import com.luoying.luoojbackendmodel.entity.QuestionList;
+import com.luoying.luoojbackendmodel.vo.QuestionListVO;
 import com.luoying.luoojbackendquestionservice.service.QuestionListService;
 import org.springframework.web.bind.annotation.*;
 
@@ -68,7 +69,6 @@ public class QuestionListController {
      * @return
      */
     @PostMapping("/get")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<QuestionList> getQuestionListById(@RequestParam("id") Long id) {
         return ResultUtils.success(questionListService.getQuestionListById(id));
     }
@@ -92,7 +92,7 @@ public class QuestionListController {
      * @return
      */
     @PostMapping("/list/page/user")
-    public BaseResponse<Page<QuestionList>> listQuestionListByPageUser(@RequestBody QuestionListQueryRequest questionListQueryRequest) {
-        return ResultUtils.success(questionListService.listQuestionListByPageUser(questionListQueryRequest));
+    public BaseResponse<Page<QuestionListVO>> listQuestionListByPageUser(@RequestBody QuestionListQueryRequest questionListQueryRequest,HttpServletRequest request) {
+        return ResultUtils.success(questionListService.listQuestionListByPageUser(questionListQueryRequest,request));
     }
 }

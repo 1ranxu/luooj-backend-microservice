@@ -130,7 +130,7 @@ public class QuestionCollectServiceImpl extends ServiceImpl<QuestionCollectMappe
         questionListVOPage.setRecords(questionListVOList);
         questionListVOPage.setTotal(questionListPage.getTotal());
         questionListVOPage.setCurrent(current);
-        questionListVOPage.setPages(pageSize);
+        questionListVOPage.setSize(pageSize);
         // 封装详情对象
         QuestionCollectByUserAllQuestionListDetail questionCollectByUserAllQuestionListDetail = new QuestionCollectByUserAllQuestionListDetail();
         questionCollectByUserAllQuestionListDetail.setIsCollect(isQuestionCollect.get());

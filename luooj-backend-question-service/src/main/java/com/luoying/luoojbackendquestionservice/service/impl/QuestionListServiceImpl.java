@@ -2,6 +2,7 @@ package com.luoying.luoojbackendquestionservice.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,8 +16,11 @@ import com.luoying.luoojbackendmodel.dto.question_list.QuestionListAddRequest;
 import com.luoying.luoojbackendmodel.dto.question_list.QuestionListQueryRequest;
 import com.luoying.luoojbackendmodel.dto.question_list.QuestionListUpdateRequest;
 import com.luoying.luoojbackendmodel.entity.QuestionList;
+import com.luoying.luoojbackendmodel.entity.QuestionListCollect;
 import com.luoying.luoojbackendmodel.entity.User;
+import com.luoying.luoojbackendmodel.vo.QuestionListVO;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionListMapper;
+import com.luoying.luoojbackendquestionservice.service.QuestionListCollectService;
 import com.luoying.luoojbackendquestionservice.service.QuestionListService;
 import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
 import org.apache.commons.lang3.ObjectUtils;
@@ -24,6 +28,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author 落樱的悔恨
@@ -35,6 +41,9 @@ public class QuestionListServiceImpl extends ServiceImpl<QuestionListMapper, Que
         implements QuestionListService {
     @Resource
     private UserFeignClient userFeignClient;
+
+    @Resource
+    private QuestionListCollectService questionListCollectService;
 
     /**
      * 创建题单
@@ -158,15 +167,41 @@ public class QuestionListServiceImpl extends ServiceImpl<QuestionListMapper, Que
      * @return
      */
     @Override
-    public Page<QuestionList> listQuestionListByPageUser(QuestionListQueryRequest questionListQueryRequest) {
+    public Page<QuestionListVO> listQuestionListByPageUser(QuestionListQueryRequest questionListQueryRequest, HttpServletRequest request) {
         // 获取分页参数
         long current = questionListQueryRequest.getCurrent();
         long size = questionListQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
         // 查询
-        return this.page(new Page<>(current, size),
+        Page<QuestionList> questionListPage = this.page(new Page<>(current, size),
                 this.getQueryWrapper(questionListQueryRequest));
+        // 获取登录用户
+        User loginUser = userFeignClient.getLoginUser(request);
+        Long userId = loginUser.getId();
+        // 封装
+        List<QuestionListVO> questionListVOList = questionListPage.getRecords().stream().map(questionList -> {
+            QuestionListVO questionListVO = new QuestionListVO();
+            // 拷贝
+            BeanUtil.copyProperties(questionList, questionListVO);
+            // 查询当前用户是否收藏了该题单
+            LambdaQueryWrapper<QuestionListCollect> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(QuestionListCollect::getQuestionListId, questionList.getId());
+            queryWrapper.eq(QuestionListCollect::getUserId, userId);
+            QuestionListCollect questionListCollect = questionListCollectService.getOne(queryWrapper);
+            if (questionListCollect != null) {
+                questionListVO.setIsCollect(true);
+            } else {
+                questionListVO.setIsCollect(false);
+            }
+            return questionListVO;
+        }).collect(Collectors.toList());
+        Page<QuestionListVO> questionListVOPage = new Page<>();
+        questionListVOPage.setRecords(questionListVOList);
+        questionListVOPage.setTotal(questionListPage.getTotal());
+        questionListVOPage.setCurrent(questionListPage.getCurrent());
+        questionListVOPage.setSize(questionListPage.getSize());
+        return questionListVOPage;
     }
 }
 

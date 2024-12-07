@@ -7,6 +7,7 @@ import com.luoying.luoojbackendmodel.dto.question_list.QuestionListAddRequest;
 import com.luoying.luoojbackendmodel.dto.question_list.QuestionListQueryRequest;
 import com.luoying.luoojbackendmodel.dto.question_list.QuestionListUpdateRequest;
 import com.luoying.luoojbackendmodel.entity.QuestionList;
+import com.luoying.luoojbackendmodel.vo.QuestionListVO;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -74,5 +75,5 @@ public interface QuestionListService extends IService<QuestionList> {
      * @param questionListQueryRequest
      * @return
      */
-    Page<QuestionList> listQuestionListByPageUser(QuestionListQueryRequest questionListQueryRequest);
+    Page<QuestionListVO> listQuestionListByPageUser(QuestionListQueryRequest questionListQueryRequest, HttpServletRequest request);
 }

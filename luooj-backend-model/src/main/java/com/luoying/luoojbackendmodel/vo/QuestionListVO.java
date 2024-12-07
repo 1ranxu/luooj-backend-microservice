@@ -23,7 +23,8 @@ public class QuestionListVO implements Serializable {
     private Long userId;
 
     /**
-     * 该题单是否收藏了某道题目
+     * 题目收藏业务：该题单是否收藏了某道题目
+     * 题单收藏业务：该题单是否被当前用户收藏
      */
     private Boolean isCollect;
 
