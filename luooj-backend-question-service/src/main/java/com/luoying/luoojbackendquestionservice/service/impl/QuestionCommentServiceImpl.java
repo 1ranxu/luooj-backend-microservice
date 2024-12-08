@@ -21,6 +21,7 @@ import com.luoying.luoojbackendmodel.entity.Question;
 import com.luoying.luoojbackendmodel.entity.QuestionComment;
 import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.vo.QuestionCommentVO;
+import com.luoying.luoojbackendmodel.vo.UserVO;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionCommentMapper;
 import com.luoying.luoojbackendquestionservice.service.QuestionCommentService;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
@@ -242,6 +243,12 @@ public class QuestionCommentServiceImpl extends ServiceImpl<QuestionCommentMappe
             if (c.getParentId() == 0) { // 这是一个一级评论
                 // 判断是否点赞过
                 c.setIsLike(isLiked(c.getId(), userId));
+                // 查询该条评论所属用户的信息
+                UserVO userVO = userFeignClient.getUserVO(userFeignClient.getById(c.getUserId()));
+                // 设置用户名称
+                c.setUserName(userVO.getUserName());
+                // 设置用户头像
+                c.setUserAvatar(userVO.getUserAvatar());
                 result.add(c);
                 map.put(c.getId(), c);
                 c.setChildList(new ArrayList<>());
@@ -257,6 +264,18 @@ public class QuestionCommentServiceImpl extends ServiceImpl<QuestionCommentMappe
                 }
                 // 判断是否点赞过
                 c.setIsLike(isLiked(c.getId(), userId));
+                // 查询该条评论所属用户的信息
+                UserVO userVO = userFeignClient.getUserVO(userFeignClient.getById(c.getUserId()));
+                // 设置用户名称
+                c.setUserName(userVO.getUserName());
+                // 设置用户头像
+                c.setUserAvatar(userVO.getUserAvatar());
+                if(c.getRespondUserId()!=0){
+                    // 查询该二级评论的评论对象所属人信息
+                    UserVO respondUserVO = userFeignClient.getUserVO(userFeignClient.getById(c.getRespondUserId()));
+                    // 设置评论对象所属人信息
+                    c.setRespondUserName(respondUserVO.getUserName());
+                }
                 // 把该评论添加到父级评论的子集评论列表中
                 parent.getChildList().add(c);
             }
