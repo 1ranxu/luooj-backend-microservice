@@ -76,6 +76,18 @@ public class QuestionSolution implements Serializable {
     @TableField(exist = false)
     private Boolean isLike;
 
+    /**
+     * 作者昵称
+     */
+    @TableField(exist = false)
+    private String userName;
+
+    /**
+     * 作者头像
+     */
+    @TableField(exist = false)
+    private String userAvatar;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

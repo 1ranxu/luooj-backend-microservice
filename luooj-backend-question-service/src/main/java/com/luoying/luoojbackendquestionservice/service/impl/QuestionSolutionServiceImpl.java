@@ -24,6 +24,7 @@ import com.luoying.luoojbackendmodel.entity.QuestionSolution;
 import com.luoying.luoojbackendmodel.entity.QuestionSolutionCollect;
 import com.luoying.luoojbackendmodel.entity.QuestionSolutionComment;
 import com.luoying.luoojbackendmodel.entity.User;
+import com.luoying.luoojbackendmodel.vo.UserVO;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionSolutionMapper;
 import com.luoying.luoojbackendquestionservice.service.QuestionSolutionCollectService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSolutionCommentService;
@@ -293,6 +294,12 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
         // 判断是否点赞过题解
         for (QuestionSolution questionSolution : page.getRecords()) {
             questionSolution.setIsLike(isLiked(questionSolution.getId(), userId));
+        }
+        // 填充题解作者信息
+        for (QuestionSolution questionSolution : page.getRecords()){
+            UserVO userVO = userFeignClient.getUserVO(userFeignClient.getById(questionSolution.getUserId()));
+            questionSolution.setUserName(userVO.getUserName());
+            questionSolution.setUserAvatar(userVO.getUserAvatar());
         }
         return page;
     }

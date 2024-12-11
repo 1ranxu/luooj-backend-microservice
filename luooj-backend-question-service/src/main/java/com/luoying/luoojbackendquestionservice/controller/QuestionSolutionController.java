@@ -81,7 +81,6 @@ public class QuestionSolutionController {
      * @param id
      * @return
      */
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @GetMapping("/get")
     public BaseResponse<QuestionSolution> getQuestionSolutionById(@RequestParam("id") Long id) {
         return ResultUtils.success(questionSolutionService.getQuestionSolutionById(id));
