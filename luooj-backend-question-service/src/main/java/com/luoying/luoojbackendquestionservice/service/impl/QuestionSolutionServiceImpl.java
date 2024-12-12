@@ -215,8 +215,14 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
      * @return
      */
     @Override
-    public QuestionSolution getQuestionSolutionById(Long id) {
-        return this.getById(id);
+    public QuestionSolution getQuestionSolutionById(Long id,HttpServletRequest request) {
+        // 获取登录用户
+        User loginUser = userFeignClient.getLoginUser(request);
+        // 查询题解
+        QuestionSolution questionSolution = this.getById(id);
+        // 判断当前登录用户是否点赞
+        questionSolution.setIsLike(isLiked(id,loginUser.getId()));
+        return questionSolution;
     }
 
     /**

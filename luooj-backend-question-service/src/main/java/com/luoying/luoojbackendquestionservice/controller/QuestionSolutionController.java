@@ -82,8 +82,8 @@ public class QuestionSolutionController {
      * @return
      */
     @GetMapping("/get")
-    public BaseResponse<QuestionSolution> getQuestionSolutionById(@RequestParam("id") Long id) {
-        return ResultUtils.success(questionSolutionService.getQuestionSolutionById(id));
+    public BaseResponse<QuestionSolution> getQuestionSolutionById(@RequestParam("id") Long id,HttpServletRequest request) {
+        return ResultUtils.success(questionSolutionService.getQuestionSolutionById(id,request));
     }
 
     /**

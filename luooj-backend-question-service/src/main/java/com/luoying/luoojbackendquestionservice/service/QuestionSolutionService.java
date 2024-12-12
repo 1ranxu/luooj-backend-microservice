@@ -67,7 +67,7 @@ public interface QuestionSolutionService extends IService<QuestionSolution> {
      * @param id
      * @return
      */
-    QuestionSolution getQuestionSolutionById(Long id);
+    QuestionSolution getQuestionSolutionById(Long id, HttpServletRequest request);
 
     /**
      * 获取条件构造器

@@ -32,6 +32,14 @@ public interface QuestionSolutionCollectService extends IService<QuestionSolutio
     Boolean deleteQuestionSolutionCollect(Long id, HttpServletRequest request);
 
     /**
+     * 判断当前登录用户是否收藏题解
+     * @param questionSolutionId
+     * @param request
+     * @return
+     */
+    Boolean isQuestionSolutionCollect(Long questionSolutionId, HttpServletRequest request);
+
+    /**
      * 获取查询条件
      *
      * @param questionSolutionCollectQueryRequest

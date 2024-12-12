@@ -47,6 +47,17 @@ public class QuestionSolutionCollectController {
     }
 
     /**
+     * 判断当前登录用户是否收藏题解
+     * @param questionSolutionId
+     * @param request
+     * @return
+     */
+    @PostMapping("/isCollect")
+    public BaseResponse<Boolean> isQuestionSolutionCollect(@RequestParam("questionSolutionId") Long questionSolutionId, HttpServletRequest request) {
+        return ResultUtils.success(questionSolutionCollectService.isQuestionSolutionCollect(questionSolutionId, request));
+    }
+
+    /**
      * 分页获取题解收藏（仅管理员）
      * @param questionSolutionCollectQueryRequest
      * @return

@@ -1,13 +1,12 @@
 package com.luoying.luoojbackendquestionservice.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.constant.CommonConstant;
-import com.luoying.luoojbackendcommon.constant.UserConstant;
-import com.luoying.luoojbackendcommon.exception.BusinessException;
 import com.luoying.luoojbackendcommon.exception.ThrowUtils;
 import com.luoying.luoojbackendcommon.utils.SqlUtils;
 import com.luoying.luoojbackendmodel.dto.question_solution_collect.QuestionSolutionCollectAddRequest;
@@ -65,12 +64,33 @@ public class QuestionSolutionCollectServiceImpl extends ServiceImpl<QuestionSolu
         // 获取登录用户
         User loginUser = userFeignClient.getLoginUser(request);
         // 只有本人和管理员才能取消收藏
-        QuestionSolutionCollect questionSolutionCollect = this.getById(id);
-        if (!questionSolutionCollect.getUserId().equals(loginUser.getId()) && !UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole())) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "只有本人或管理员可以取消收藏");
-        }
+        LambdaQueryWrapper<QuestionSolutionCollect> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(QuestionSolutionCollect::getSolutionId,id);
+        queryWrapper.eq(QuestionSolutionCollect::getUserId,loginUser.getId());
         // 删除
-        return this.removeById(id);
+        return this.remove(queryWrapper);
+    }
+
+
+    /**
+     * 判断当前登录用户是否收藏题解
+     *
+     * @param questionSolutionId
+     * @param request
+     * @return
+     */
+    @Override
+    public Boolean isQuestionSolutionCollect(Long questionSolutionId, HttpServletRequest request) {
+        // 获取登录用户
+        User loginUser = userFeignClient.getLoginUser(request);
+        Long userId = loginUser.getId();
+        // 查询
+        LambdaQueryWrapper<QuestionSolutionCollect> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(QuestionSolutionCollect::getSolutionId, questionSolutionId);
+        queryWrapper.eq(QuestionSolutionCollect::getUserId, userId);
+        QuestionSolutionCollect questionSolutionCollect = this.getOne(queryWrapper);
+        if(questionSolutionCollect == null) return false;
+        return true;
     }
 
     /**
