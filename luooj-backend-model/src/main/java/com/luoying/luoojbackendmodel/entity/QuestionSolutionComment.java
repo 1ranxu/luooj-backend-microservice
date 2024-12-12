@@ -26,6 +26,18 @@ public class QuestionSolutionComment implements Serializable {
     private Long userId;
 
     /**
+     * 作者昵称
+     */
+    @TableField(exist = false)
+    private String userName;
+
+    /**
+     * 作者头像
+     */
+    @TableField(exist = false)
+    private String userAvatar;
+
+    /**
      * 题解id
      */
     private Long solutionId;
@@ -39,6 +51,12 @@ public class QuestionSolutionComment implements Serializable {
      * 本评论回复的评论的发布人，如果本评论是一级评论，则值为0
      */
     private Long respondUserId;
+
+    /**
+     * 本评论回复的评论的发布人的昵称，如果本评论是一级评论，则值为空
+     */
+    @TableField(exist = false)
+    private String respondUserName;
 
     /**
      * 回复内容
@@ -72,6 +90,12 @@ public class QuestionSolutionComment implements Serializable {
      */
     @TableField(exist = false)
     private List<QuestionSolutionComment> childList;
+
+    /**
+     * 是否展示子评论列表
+     */
+    @TableField(exist = false)
+    private Boolean showReplyBox = false;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
