@@ -328,12 +328,27 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         if (id <= 0 || (id + "").length() != 19) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        // 获取登录用户
+        User loginUser = userFeignClient.getLoginUser(request);
+        Long userId = loginUser.getId();
         // 查询
         Question question = this.queryById(id);
         if (question == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
-        return this.getQuestionVO(question, request);
+        // 查询登录用户的通过列表
+        LambdaQueryWrapper<AcceptedQuestion> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AcceptedQuestion::getUserId, userId);
+        List<AcceptedQuestion> acceptedQuestionList = acceptedQuestionService.list(queryWrapper);
+        Set<Long> acceptedQuestionIdSet = acceptedQuestionList.stream().map(AcceptedQuestion::getQuestionId).collect(Collectors.toSet());
+        QuestionVO questionVO = this.getQuestionVO(question, request);
+        // 判断用户是否通过，并填充标记
+        if(acceptedQuestionIdSet.contains(id)){
+            questionVO.setIsAccepted(0);
+        }else{
+            questionVO.setIsAccepted(1);
+        }
+        return questionVO;
     }
 
     /**

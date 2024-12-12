@@ -80,7 +80,7 @@ public class QuestionVO implements Serializable {
     private Long userId;
 
     /**
-     * 是否通过
+     * 是否通过，0-通过 1-未通过
      */
     private Integer isAccepted;
 
@@ -95,7 +95,7 @@ public class QuestionVO implements Serializable {
     private Date updateTime;
 
     /**
-     *
+     * 创建人信息
      */
     private UserVO userVO;
 
