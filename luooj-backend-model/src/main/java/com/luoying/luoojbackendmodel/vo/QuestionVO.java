@@ -85,6 +85,11 @@ public class QuestionVO implements Serializable {
     private Integer isAccepted;
 
     /**
+     * 是否点赞
+     */
+    private Boolean isLike;
+
+    /**
      * 创建时间
      */
     private Date createTime;

@@ -50,6 +50,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.luoying.luoojbackendcommon.constant.LikeConstant.QUESTION;
 import static com.luoying.luoojbackendcommon.constant.RedisKey.*;
 
 /**
@@ -226,8 +227,10 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         // 获取登录用户
         User loginUser = userFeignClient.getLoginUser(request);
         // 判断当前登录用户是否已经点赞该题目
-        String key = RedisKey.getKey(LIKE_LIST_KEY, LikeConstant.QUESTION, id);
+        String key = RedisKey.getKey(LIKE_LIST_KEY, QUESTION, id);
         Boolean isMember = stringRedisTemplate.opsForSet().isMember(key, loginUser.getId().toString());
+        // 删除题目缓存
+        stringRedisTemplate.delete(RedisKey.getKey(RedisKey.SINGLE_QUESTION_KEY, id));
         if (BooleanUtil.isFalse(isMember)) { // 未点赞
             // 数据库点赞数 +1
             boolean isSuccess = update().setSql("likes = likes + 1").eq("id", id).update();
@@ -347,6 +350,12 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
             questionVO.setIsAccepted(0);
         }else{
             questionVO.setIsAccepted(1);
+        }
+        // 判断用户是否点赞，并填充标记
+        if(Boolean.TRUE.equals(isLiked(id,userId))){
+            questionVO.setIsLike(true);
+        }else{
+            questionVO.setIsLike(false);
         }
         return questionVO;
     }
@@ -660,6 +669,19 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
      */
     private void unLock(String key) {
         stringRedisTemplate.delete(key);
+    }
+
+    /**
+     * 判断题目是否被点赞过
+     *
+     * @param questionId
+     * @param userId
+     * @return
+     */
+    public Boolean isLiked(Long questionId, Long userId) {
+        // 判断当前用户是否已经点赞该题解
+        String key = RedisKey.getKey(LIKE_LIST_KEY, QUESTION, questionId);
+        return stringRedisTemplate.opsForSet().isMember(key, userId.toString());
     }
 }
 
