@@ -175,7 +175,7 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
     @Override
     public Boolean isLiked(Long solutionId, Long userId) {
         // 判断当前用户是否已经点赞该题解
-        String key = RedisKey.getKey(LIKE_LIST_KEY, "question_solution", solutionId);
+        String key = RedisKey.getKey(LIKE_LIST_KEY, LikeConstant.QUESTION_SOLUTION, solutionId);
         return stringRedisTemplate.opsForSet().isMember(key, userId.toString());
     }
 
@@ -222,6 +222,10 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
         QuestionSolution questionSolution = this.getById(id);
         // 判断当前登录用户是否点赞
         questionSolution.setIsLike(isLiked(id,loginUser.getId()));
+        // 填充作者详情
+        UserVO userVO = userFeignClient.getUserVO(userFeignClient.getById(questionSolution.getUserId()));
+        questionSolution.setUserName(userVO.getUserName());
+        questionSolution.setUserAvatar(userVO.getUserAvatar());
         return questionSolution;
     }
 
