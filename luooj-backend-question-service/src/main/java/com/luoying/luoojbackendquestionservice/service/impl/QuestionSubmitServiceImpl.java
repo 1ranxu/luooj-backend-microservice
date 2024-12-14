@@ -280,18 +280,16 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
 
     /**
      * 获取个人提交详情
-     *
+     * @param userId
      * @param request
      * @return
      */
     @Override
-    public QuestionSubmitDetail getPersonSubmitDetail(HttpServletRequest request) {
+    public QuestionSubmitDetail getPersonSubmitDetail(Long userId, HttpServletRequest request) {
         QuestionSubmitDetail questionSubmitDetail = new QuestionSubmitDetail();
-        // 1.获取登录用户id
-        User loginUser = userFeignClient.getLoginUser(request);
         // 2.根据年份分组
         LambdaQueryWrapper<QuestionSubmit> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(QuestionSubmit::getUserId, loginUser.getId());
+        wrapper.eq(QuestionSubmit::getUserId, userId);
         wrapper.select(QuestionSubmit::getYear, QuestionSubmit::getCount);
         wrapper.groupBy(QuestionSubmit::getYear);
         List<QuestionSubmit> questionSubmitList = this.list(wrapper);
@@ -302,7 +300,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         questionSubmitDetail.setYears(years);
         // 3.根据日分组
         wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(QuestionSubmit::getUserId, loginUser.getId());
+        wrapper.eq(QuestionSubmit::getUserId, userId);
         wrapper.select(QuestionSubmit::getDay, QuestionSubmit::getCount);
         wrapper.groupBy(QuestionSubmit::getDay);
         questionSubmitList = this.list(wrapper);
@@ -322,7 +320,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         questionSubmitDetail.setSubmitDetail(submitDetail);
         // 4.查询一年提交了多少天
         wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(QuestionSubmit::getUserId, loginUser.getId());
+        wrapper.eq(QuestionSubmit::getUserId, userId);
         wrapper.select(QuestionSubmit::getYear, QuestionSubmit::getCountDay);
         wrapper.groupBy(QuestionSubmit::getYear);
         questionSubmitList = this.list(wrapper);

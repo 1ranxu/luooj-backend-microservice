@@ -54,10 +54,11 @@ public interface QuestionSubmitService extends IService<QuestionSubmit> {
 
     /**
      * 获取个人提交详情
+     * @param userId
      * @param request
      * @return
      */
-    QuestionSubmitDetail getPersonSubmitDetail(HttpServletRequest request);
+    QuestionSubmitDetail getPersonSubmitDetail(Long userId, HttpServletRequest request);
 
     /**
      * 获取封装后的题目提交

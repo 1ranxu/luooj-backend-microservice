@@ -19,7 +19,7 @@ public interface AcceptedQuestionService extends IService<AcceptedQuestion> {
      * @param request
      * @return
      */
-    AcceptedQuestionDetailVO getAcceptedQuestionDetail(HttpServletRequest request);
+    AcceptedQuestionDetailVO getAcceptedQuestionDetail(Long userId,HttpServletRequest request);
 
     /**
      * 获取用户的排名（通过题目数量）

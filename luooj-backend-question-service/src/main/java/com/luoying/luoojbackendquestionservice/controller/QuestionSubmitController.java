@@ -113,12 +113,12 @@ public class QuestionSubmitController {
 
     /**
      * 获取个人提交详情
-     *
+     * @param userId
      * @param request
      * @return
      */
     @GetMapping("/get/user_submit/detail")
-    public BaseResponse<QuestionSubmitDetail> getPersonSubmitDetail(HttpServletRequest request) {
-        return ResultUtils.success(questionSubmitService.getPersonSubmitDetail(request));
+    public BaseResponse<QuestionSubmitDetail> getPersonSubmitDetail(@RequestParam("userId") Long userId, HttpServletRequest request) {
+        return ResultUtils.success(questionSubmitService.getPersonSubmitDetail(userId,request));
     }
 }

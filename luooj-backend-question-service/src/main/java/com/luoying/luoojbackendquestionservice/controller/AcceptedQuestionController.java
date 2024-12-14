@@ -29,8 +29,8 @@ public class AcceptedQuestionController {
      * @return
      */
     @GetMapping("/get/user_accepted_question/detail")
-    public BaseResponse<AcceptedQuestionDetailVO> getAcceptedQuestionDetail(HttpServletRequest request) {
-        return ResultUtils.success(acceptedQuestionService.getAcceptedQuestionDetail(request));
+    public BaseResponse<AcceptedQuestionDetailVO> getAcceptedQuestionDetail(@RequestParam("userId") Long userId, HttpServletRequest request) {
+        return ResultUtils.success(acceptedQuestionService.getAcceptedQuestionDetail(userId, request));
     }
 
     /**
