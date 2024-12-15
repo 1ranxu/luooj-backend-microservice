@@ -52,7 +52,6 @@ public class ContestAddRequest implements Serializable {
      */
     private Map<Integer, ContestQuestion> questions;
 
-
     /**
      * 状态（0-待开始、1-进行中、2-已结束）
      */

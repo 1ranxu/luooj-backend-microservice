@@ -69,7 +69,6 @@ public class ContestController {
      * @return
      */
     @GetMapping("/get")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Contest> getContestById(@RequestParam("id") Long id) {
         return ResultUtils.success(contestService.getContestById(id));
     }

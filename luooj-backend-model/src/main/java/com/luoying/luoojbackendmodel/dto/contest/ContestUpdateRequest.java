@@ -52,10 +52,10 @@ public class ContestUpdateRequest implements Serializable {
 
     /**
      * 题目列表（json 数组）
-     * key：题目id
-     * value：分数
+     * key：题目顺序
+     * value：竞赛题目
      */
-    private Map<Long, Integer> questions;
+    private Map<Integer, ContestQuestion> questions;
 
     /**
      * 状态（0-待开始、1-进行中、2-已结束）
