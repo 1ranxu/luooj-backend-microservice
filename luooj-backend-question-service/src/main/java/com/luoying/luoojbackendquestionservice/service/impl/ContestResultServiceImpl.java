@@ -44,6 +44,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.luoying.luoojbackendcommon.constant.RedisKey.CONTEST_RANK_KEY;
@@ -83,7 +84,7 @@ public class ContestResultServiceImpl extends ServiceImpl<ContestResultMapper, C
         QuestionSubmitJudgeInfo questionSubmitJudgeInfo = judgeFeignClient.contestJudge(contestQuestionSubmit);
         // 获取登录用户
         User loginUser = userFeignClient.getLoginUser(request);
-        // 获取题目信息
+        // 获取竞赛题目信息
         Contest contest = contestService.getContestById(contestQuestionSubmit.getContestId());
         Map<Integer, ContestQuestion> contestQuestionDetail = GSON.fromJson(contest.getQuestions(), new TypeToken<Map<Integer, ContestQuestion>>() {
         }.getType());
@@ -263,11 +264,6 @@ public class ContestResultServiceImpl extends ServiceImpl<ContestResultMapper, C
      */
     @Override
     public Page<ContestRank> contestRankStatistics(ContestResultQueryRequest contestResultQueryRequest) {
-        // 获取分页参数
-        long current = contestResultQueryRequest.getCurrent();
-        long size = contestResultQueryRequest.getPageSize();
-        // 限制爬虫
-        ThrowUtils.throwIf(size > 50, ErrorCode.PARAMS_ERROR);
         // 查询缓存
         String key = RedisKey.getKey(CONTEST_RANK_KEY, contestResultQueryRequest.getContestId());
         String contestRankPageStr = stringRedisTemplate.opsForValue().get(key);
@@ -283,10 +279,11 @@ public class ContestResultServiceImpl extends ServiceImpl<ContestResultMapper, C
         if (contest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "请不要攻击本站");
         }
-        // 查询
-        Page<ContestResult> contestResultPage = this.page(new Page<>(current, size), this.getQueryWrapper(contestResultQueryRequest));
+        // 查询所有
+        List<ContestResult> contestResultList = this.list(this.getQueryWrapper(contestResultQueryRequest));
         // 处理
-        List<ContestRank> contestRankList = contestResultPage.getRecords().stream().map(contestResult -> {
+        AtomicInteger index = new AtomicInteger(1);
+        List<ContestRank> contestRankList = contestResultList.stream().map(contestResult -> {
             ContestRank contestRank = new ContestRank();
             // 填充用户信息
             UserVO userVO = userFeignClient.getUserVO(userFeignClient.getById(contestResult.getApplicantId()));
@@ -350,13 +347,14 @@ public class ContestResultServiceImpl extends ServiceImpl<ContestResultMapper, C
                 contestRank.setTime(calcHourMinuteSecond(calendar.getTime(), calendar.getTime()));
             }
             return contestRank;
-        }).sorted((o1, o2) -> !o1.getScore().equals(o2.getScore()) ? o2.getScore() - o1.getScore() : o2.getTime().getValue() - o1.getTime().getValue()).collect(Collectors.toList());
+        }).sorted((o1, o2) -> !o1.getScore().equals(o2.getScore()) ? o2.getScore() - o1.getScore() : o1.getTime().getValue() - o2.getTime().getValue()).map((contestRank -> {
+            contestRank.setRank(index.getAndIncrement());
+            return contestRank;
+        })).collect(Collectors.toList());
         // 组装成新的 Page
         Page<ContestRank> contestRankPage = new Page<>();
         contestRankPage.setRecords(contestRankList);
-        contestRankPage.setCurrent(contestResultPage.getCurrent());
-        contestRankPage.setSize(contestResultPage.getSize());
-        contestRankPage.setTotal(contestResultPage.getTotal());
+        contestRankPage.setTotal(contestResultList.size());
         // 存入缓存
         stringRedisTemplate.opsForValue().set(key, GSON.toJson(contestRankPage));
         stringRedisTemplate.expire(key, CONTEST_RANK_KEY_TTL, TimeUnit.SECONDS);

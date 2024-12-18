@@ -34,5 +34,10 @@ public class ContestRank implements Serializable {
      */
     private Map<Integer, ContestRankQuestionDetail> submitDetail;
 
+    /**
+     * 排名
+     */
+    private Integer rank;
+
     private static final long serialVersionUID = 1L;
 }
