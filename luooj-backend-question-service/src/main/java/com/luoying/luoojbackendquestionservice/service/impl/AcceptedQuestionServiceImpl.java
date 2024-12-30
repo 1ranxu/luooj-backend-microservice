@@ -2,9 +2,17 @@ package com.luoying.luoojbackendquestionservice.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.luoying.luoojbackendcommon.common.DeleteRequest;
+import com.luoying.luoojbackendcommon.common.ErrorCode;
+import com.luoying.luoojbackendcommon.constant.CommonConstant;
 import com.luoying.luoojbackendcommon.constant.RedisKey;
+import com.luoying.luoojbackendcommon.exception.BusinessException;
+import com.luoying.luoojbackendcommon.exception.ThrowUtils;
+import com.luoying.luoojbackendcommon.utils.SqlUtils;
+import com.luoying.luoojbackendmodel.dto.accepted_question.AcceptedQuestionQueryRequest;
 import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitQueryRequest;
 import com.luoying.luoojbackendmodel.entity.AcceptedQuestion;
 import com.luoying.luoojbackendmodel.entity.Question;
@@ -18,6 +26,7 @@ import com.luoying.luoojbackendquestionservice.service.AcceptedQuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionService;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
 import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -55,6 +64,68 @@ public class AcceptedQuestionServiceImpl extends ServiceImpl<AcceptedQuestionMap
 
     @Resource
     private QuestionSubmitMapper questionSubmitMapper;
+
+    /**
+     * 删除通过记录（仅管理员）
+     * @param deleteRequest
+     * @param request
+     * @return
+     */
+    @Override
+    public Boolean deleteAcceptedQuestion(DeleteRequest deleteRequest, HttpServletRequest request) {
+        // 校验
+        if (deleteRequest == null || deleteRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 判断记录是否存在
+        long id = deleteRequest.getId();
+        AcceptedQuestion acceptedQuestion = this.getById(id);
+        ThrowUtils.throwIf(acceptedQuestion == null, ErrorCode.NOT_FOUND_ERROR);
+        // 删除通过记录
+        return this.removeById(id);
+    }
+
+    /**
+     * 获取查询条件
+     * @param acceptedQuestionQueryRequest 通过记录请求
+     * @return
+     */
+    @Override
+    public QueryWrapper<AcceptedQuestion> getQueryWrapper(AcceptedQuestionQueryRequest acceptedQuestionQueryRequest) {
+        QueryWrapper<AcceptedQuestion> queryWrapper = new QueryWrapper<>();
+        // 判空
+        if (acceptedQuestionQueryRequest == null) {
+            return queryWrapper;
+        }
+        // 获取参数
+        Long id = acceptedQuestionQueryRequest.getId();
+        Long questionId = acceptedQuestionQueryRequest.getQuestionId();
+        Long userId = acceptedQuestionQueryRequest.getUserId();
+        String sortField = acceptedQuestionQueryRequest.getSortField();
+        String sortOrder = acceptedQuestionQueryRequest.getSortOrder();
+
+        // 拼接查询条件
+        queryWrapper.eq(ObjectUtils.isNotEmpty(id), "id", id);
+        queryWrapper.eq(ObjectUtils.isNotEmpty(questionId), "questionId", questionId);
+        queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
+        queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
+        // 返回
+        return queryWrapper;
+    }
+
+    /**
+     * 分页获取通过记录（仅管理员）
+     * @param acceptedQuestionQueryRequest
+     * @return
+     */
+    @Override
+    public Page<AcceptedQuestion> listAcceptedQuestionByPage(AcceptedQuestionQueryRequest acceptedQuestionQueryRequest) {
+        // 获取分页参数
+        long current = acceptedQuestionQueryRequest.getCurrent();
+        long size = acceptedQuestionQueryRequest.getPageSize();
+        // 查询
+        return this.page(new Page<>(current, size), this.getQueryWrapper(acceptedQuestionQueryRequest));
+    }
 
     /**
      * 获取用户通过题目的详情
