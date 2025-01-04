@@ -78,8 +78,8 @@ public class MessageConsumer {
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "设置通过数失败");
             }
             // 添加通过记录
-            if(questionFeignClient.getAcceptedQuestion(questionId, questionId) == null){
-                Long userId = questionSubmit.getUserId();
+            Long userId = questionSubmit.getUserId();
+            if(questionFeignClient.getAcceptedQuestion(questionId, userId) == null){
                 questionFeignClient.addAcceptedQuestion(questionId, userId);
             }
             // 确认消息
