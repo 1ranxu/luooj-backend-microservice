@@ -1,6 +1,5 @@
 package com.luoying.luoojbackendcommon.config;
 
-import com.sun.istack.internal.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -20,7 +19,7 @@ public class ThreadPoolExecutorConfig {
         private int count = 1;
 
         @Override
-        public Thread newThread(@NotNull Runnable r) {
+        public Thread newThread( Runnable r) {
             Thread thread = new Thread(r);
             thread.setName(threadName + count);
             count++;

@@ -439,6 +439,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (StringUtils.isNotBlank(userUpdateRequest.getUserPassword())) {
             String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userUpdateRequest.getUserPassword()).getBytes());
             user.setUserPassword(encryptPassword);
+        }else{
+            user.setUserPassword(null);
         }
         // 更新
         return this.updateById(user);
