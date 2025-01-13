@@ -22,7 +22,7 @@ public class JwtUtils {
     /**
      * 加密KEY
      */
-    private static final String TOKEN_SECRET = "shier";
+    private static final String TOKEN_SECRET = "luoying";
 
 
     /**
@@ -62,8 +62,9 @@ public class JwtUtils {
         }
 
         try {
+            // 如果它不是签名的JWT，则该行将抛出异常
             Claims claims = Jwts.parser()
-                    .setSigningKey("shier")
+                    .setSigningKey(TOKEN_SECRET)
                     .parseClaimsJws(token)
                     .getBody();
         } catch (Exception e) {

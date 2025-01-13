@@ -12,7 +12,6 @@ import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.constant.CommonConstant;
 import com.luoying.luoojbackendcommon.constant.RedisKey;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
-import com.luoying.luoojbackendcommon.exception.ThrowUtils;
 import com.luoying.luoojbackendcommon.utils.SqlUtils;
 import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeRequest;
 import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeResponse;

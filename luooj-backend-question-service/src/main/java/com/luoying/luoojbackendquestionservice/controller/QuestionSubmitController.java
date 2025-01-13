@@ -12,7 +12,6 @@ import com.luoying.luoojbackendmodel.codesanbox.RunCodeResponse;
 import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitAddRequest;
 import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitDetail;
 import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitQueryRequest;
-import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.vo.QuestionSubmitVO;
 import com.luoying.luoojbackendquestionservice.service.QuestionSubmitService;
 import com.luoying.luoojbackendserviceclient.service.UserFeignClient;

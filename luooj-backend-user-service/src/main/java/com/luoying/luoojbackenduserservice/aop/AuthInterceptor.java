@@ -1,8 +1,5 @@
 package com.luoying.luoojbackenduserservice.aop;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-
 import com.luoying.luoojbackendcommon.annotation.AuthCheck;
 import com.luoying.luoojbackendcommon.common.ErrorCode;
 import com.luoying.luoojbackendcommon.exception.BusinessException;
@@ -17,6 +14,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author 落樱的悔恨

@@ -3,7 +3,6 @@ package com.luoying.luoojbackendjudgeservice.judge.strategy.context;
 import com.luoying.luoojbackendmodel.dto.question.QuestionJudgeCase;
 import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitJudgeInfo;
 import com.luoying.luoojbackendmodel.entity.Question;
-import com.luoying.luoojbackendmodel.entity.QuestionSubmit;
 import lombok.Data;
 
 import java.util.List;

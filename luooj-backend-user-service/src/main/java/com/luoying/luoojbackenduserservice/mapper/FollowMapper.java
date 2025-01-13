@@ -1,7 +1,7 @@
 package com.luoying.luoojbackenduserservice.mapper;
 
-import com.luoying.luoojbackendmodel.entity.Follow;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.luoying.luoojbackendmodel.entity.Follow;
 
 /**
 * @author 落樱的悔恨
