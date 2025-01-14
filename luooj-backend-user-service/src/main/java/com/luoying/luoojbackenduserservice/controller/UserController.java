@@ -215,7 +215,7 @@ public class UserController {
     @PostMapping("/normal")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> normalUser(@RequestBody IdRequest idRequest) {
-        return ResultUtils.success(userService.normxalUser(idRequest));
+        return ResultUtils.success(userService.normalUser(idRequest));
     }
 
     /**

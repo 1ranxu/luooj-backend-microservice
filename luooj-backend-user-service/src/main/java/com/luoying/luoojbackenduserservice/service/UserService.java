@@ -175,7 +175,7 @@ public interface UserService extends IService<User> {
      * @param idRequest
      * @return
      */
-    Boolean normxalUser(IdRequest idRequest);
+    Boolean normalUser(IdRequest idRequest);
 
     /**
      * 封号

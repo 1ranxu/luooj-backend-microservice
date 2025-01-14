@@ -659,7 +659,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return
      */
     @Override
-    public Boolean normxalUser(IdRequest idRequest) {
+    public Boolean normalUser(IdRequest idRequest) {
         // 校验
         if (idRequest == null || idRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
