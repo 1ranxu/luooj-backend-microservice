@@ -23,10 +23,7 @@ import com.luoying.luoojbackendmodel.entity.*;
 import com.luoying.luoojbackendmodel.vo.QuestionVO;
 import com.luoying.luoojbackendmodel.vo.UserVO;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionMapper;
-import com.luoying.luoojbackendquestionservice.service.AcceptedQuestionService;
-import com.luoying.luoojbackendquestionservice.service.QuestionCollectService;
-import com.luoying.luoojbackendquestionservice.service.QuestionCommentService;
-import com.luoying.luoojbackendquestionservice.service.QuestionService;
+import com.luoying.luoojbackendquestionservice.service.*;
 import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -43,9 +40,9 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -80,6 +77,9 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
 
     @Resource
     private QuestionCollectService questionCollectService;
+
+    @Resource
+    private QuestionSolutionService questionSolutionService;
 
     private static final Gson GSON = new Gson();
 
@@ -205,12 +205,23 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         LambdaQueryWrapper<QuestionCollect> queryWrapper1 = new LambdaQueryWrapper<>();
         queryWrapper1.eq(QuestionCollect::getQuestionId, deleteRequest.getId());
         questionCollectService.remove(queryWrapper1);
+        // 删除题解
+        LambdaQueryWrapper<QuestionSolution> queryWrapper2 = new LambdaQueryWrapper<>();
+        queryWrapper2.eq(QuestionSolution::getQuestionId, id);
+        List<QuestionSolution> questionSolutions = questionSolutionService.list(queryWrapper2);
+        for (QuestionSolution questionSolution : questionSolutions) {
+            DeleteRequest delete = new DeleteRequest();
+            delete.setId(questionSolution.getId());
+            questionSolutionService.deleteQuestionSolution(delete, request);
+        }
         // 删除题目
         boolean isSuccess = this.removeById(id);
         // 删除缓存
         if (isSuccess) {
-            String key = RedisKey.getKey(LIKE_LIST_KEY, LikeConstant.QUESTION_SOLUTION_COMMENT, deleteRequest.getId());
-            stringRedisTemplate.delete(key);
+            String key1 = RedisKey.getKey(LIKE_LIST_KEY, LikeConstant.QUESTION_COMMENT, deleteRequest.getId());
+            stringRedisTemplate.delete(key1);
+            String key2 = RedisKey.getKey(LIKE_LIST_KEY, QUESTION, id);
+            stringRedisTemplate.delete(key2);
         }
         return isSuccess;
     }
@@ -346,15 +357,15 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         Set<Long> acceptedQuestionIdSet = acceptedQuestionList.stream().map(AcceptedQuestion::getQuestionId).collect(Collectors.toSet());
         QuestionVO questionVO = this.getQuestionVO(question, request);
         // 判断用户是否通过，并填充标记
-        if(acceptedQuestionIdSet.contains(id)){
+        if (acceptedQuestionIdSet.contains(id)) {
             questionVO.setIsAccepted(0);
-        }else{
+        } else {
             questionVO.setIsAccepted(1);
         }
         // 判断用户是否点赞，并填充标记
-        if(Boolean.TRUE.equals(isLiked(id,userId))){
+        if (Boolean.TRUE.equals(isLiked(id, userId))) {
             questionVO.setIsLike(true);
-        }else{
+        } else {
             questionVO.setIsLike(false);
         }
         return questionVO;
@@ -626,7 +637,13 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
     @Override
     public Long getPrevQuestion(long questionId) {
         String tableName = "question";
-        return questionMapper.getPrevQuestion(tableName, questionId);
+        // 查询上一条记录
+        Long prevQuestionId = questionMapper.getPrevQuestion(tableName, questionId);
+        if(prevQuestionId == null){
+            // 如果没有上一条记录，返回最后一条记录
+            prevQuestionId = questionMapper.getLastQuestion();
+        }
+        return prevQuestionId;
     }
 
     /**
@@ -638,7 +655,13 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
     @Override
     public Long getNextQuestion(long questionId) {
         String tableName = "question";
-        return questionMapper.getNextQuestion(tableName, questionId);
+        // 查询下一条记录
+        Long nextQuestionId = questionMapper.getNextQuestion(tableName, questionId);
+        if(nextQuestionId == null){
+            // 如果没有下一条记录，返回第一条记录
+            nextQuestionId = questionMapper.getFirstQuestion();
+        }
+        return nextQuestionId;
     }
 
     /**
@@ -648,10 +671,28 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
      */
     @Override
     public Long getRandomQuestion() {
-        List<Question> questionList = questionMapper.selectList(null);
-        Random random = new Random();
-        int index = random.nextInt(questionList.size());
-        Question question = questionList.get(index);
+        // 查询最小 ID 和最大 ID
+        Long minId = questionMapper.getFirstQuestion();
+        Long maxId = questionMapper.getLastQuestion();;
+
+        if (minId == null || maxId == null) {
+            return null; // 表为空
+        }
+        // 生成 [minId, maxId] 范围内的随机 long 类型值
+        Long randomId = ThreadLocalRandom.current().nextLong(minId, maxId + 1);
+
+        // 查询最接近随机 ID 的记录
+        QueryWrapper<Question> queryWrapper = new QueryWrapper<>();
+        queryWrapper.ge("id", randomId).orderByAsc("id").last("limit 1");
+        Question question = questionMapper.selectOne(queryWrapper);
+
+        if (question == null) {
+            // 如果未找到，查询最小 ID 的记录
+            queryWrapper = new QueryWrapper<>();
+            queryWrapper.orderByAsc("id");
+            question = questionMapper.selectOne(queryWrapper);
+        }
+
         return question.getId();
     }
 

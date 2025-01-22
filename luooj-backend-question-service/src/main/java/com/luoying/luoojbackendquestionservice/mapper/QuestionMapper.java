@@ -3,6 +3,7 @@ package com.luoying.luoojbackendquestionservice.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.luoying.luoojbackendmodel.entity.Question;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 
 /**
@@ -18,7 +19,7 @@ public interface QuestionMapper extends BaseMapper<Question> {
      * @param tableName  表名
      * @param questionId 当前题目id
      */
-    long getPrevQuestion(@Param("tableName") String tableName, @Param("questionId") long questionId);
+    Long getPrevQuestion(@Param("tableName") String tableName, @Param("questionId") long questionId);
 
     /**
      * 查询下一道题目
@@ -26,7 +27,21 @@ public interface QuestionMapper extends BaseMapper<Question> {
      * @param tableName  表名
      * @param questionId 当前题目id
      */
-    long getNextQuestion(@Param("tableName") String tableName, @Param("questionId") long questionId);
+    Long getNextQuestion(@Param("tableName") String tableName, @Param("questionId") long questionId);
+
+    /**
+     * 返回第一条记录
+     *
+     */
+    @Select("select id from question order by id asc limit 1")
+    Long getFirstQuestion();
+
+    /**
+     * 返回最后一条记录
+     *
+     */
+    @Select("select id from question order by id desc limit 1")
+    Long getLastQuestion();
 
 }
 

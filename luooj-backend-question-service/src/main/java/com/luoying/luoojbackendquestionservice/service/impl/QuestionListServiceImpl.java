@@ -15,15 +15,18 @@ import com.luoying.luoojbackendcommon.utils.SqlUtils;
 import com.luoying.luoojbackendmodel.dto.question_list.QuestionListAddRequest;
 import com.luoying.luoojbackendmodel.dto.question_list.QuestionListQueryRequest;
 import com.luoying.luoojbackendmodel.dto.question_list.QuestionListUpdateRequest;
+import com.luoying.luoojbackendmodel.entity.QuestionCollect;
 import com.luoying.luoojbackendmodel.entity.QuestionList;
 import com.luoying.luoojbackendmodel.entity.QuestionListCollect;
 import com.luoying.luoojbackendmodel.entity.User;
 import com.luoying.luoojbackendmodel.vo.QuestionListVO;
 import com.luoying.luoojbackendquestionservice.mapper.QuestionListMapper;
+import com.luoying.luoojbackendquestionservice.service.QuestionCollectService;
 import com.luoying.luoojbackendquestionservice.service.QuestionListCollectService;
 import com.luoying.luoojbackendquestionservice.service.QuestionListService;
 import com.luoying.luoojbackendserviceclient.service.UserFeignClient;
 import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -44,6 +47,10 @@ public class QuestionListServiceImpl extends ServiceImpl<QuestionListMapper, Que
 
     @Resource
     private QuestionListCollectService questionListCollectService;
+
+    @Resource
+    @Lazy
+    private QuestionCollectService questionCollectService;
 
     /**
      * 创建题单
@@ -79,7 +86,11 @@ public class QuestionListServiceImpl extends ServiceImpl<QuestionListMapper, Que
         if (!questionList.getUserId().equals(loginUser.getId()) && !UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "只有本人或管理员可以删除题单");
         }
-        // 删除
+        // 删除题单收藏的题目
+        LambdaQueryWrapper<QuestionCollect> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(QuestionCollect::getQuestionListId, id);
+        questionCollectService.remove(queryWrapper);
+        // 删除题单
         return this.removeById(id);
     }
 

@@ -96,7 +96,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 账号、密码只能由英文字母大小写、数字组成
         String regex = "^[a-zA-Z0-9]+$";
         if (!userAccount.matches(regex) || !userPassword.matches(regex) || !checkPassword.matches(regex)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "昵称、账号、密码只能由英文字母大小写、数字组成");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号、密码只能由英文字母大小写、数字组成");
         }
         // 校验邮箱格式
         regex = "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$";
