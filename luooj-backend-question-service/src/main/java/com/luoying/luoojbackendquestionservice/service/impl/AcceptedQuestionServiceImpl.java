@@ -215,7 +215,7 @@ public class AcceptedQuestionServiceImpl extends ServiceImpl<AcceptedQuestionMap
                 eachDifficultySubmitPassRate.put(difficulty, 0.0);
             }
         }
-        // 统计的难度题目的通过率
+        // 统计各难度题目的通过率
         acceptedQuestionDetailVO.setEachDifficultysubmissionPassRate(eachDifficultySubmitPassRate);
         return acceptedQuestionDetailVO;
     }
@@ -232,7 +232,7 @@ public class AcceptedQuestionServiceImpl extends ServiceImpl<AcceptedQuestionMap
         // 查询缓存
         Long userId = loginUser.getId();
         String key = RedisKey.getKey(ACCEPTED_QUESTION_RANK_KEY);
-        Long rank = stringRedisTemplate.opsForZSet().rank(key, userId.toString());
+        Long rank = stringRedisTemplate.opsForZSet().reverseRank(key, userId.toString());
         if (rank != null) return rank + 1;
         // 未查到，构建缓存
         LambdaQueryWrapper<AcceptedQuestion> queryWrapper = new LambdaQueryWrapper<>();
@@ -240,7 +240,7 @@ public class AcceptedQuestionServiceImpl extends ServiceImpl<AcceptedQuestionMap
         List<AcceptedQuestion> acceptedQuestionList = this.list(queryWrapper);
         stringRedisTemplate.opsForZSet().add(key, userId.toString(), acceptedQuestionList.size() * 1.0);
         stringRedisTemplate.expire(key, ACCEPTED_QUESTION_RANK_KEY_TTL, TimeUnit.MINUTES);
-        rank = stringRedisTemplate.opsForZSet().rank(key, userId.toString());
+        rank = stringRedisTemplate.opsForZSet().reverseRank(key, userId.toString());
         return rank + 1;
     }
 

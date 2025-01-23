@@ -154,12 +154,6 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
             messageProducer.sendMessage(EXCHANGE_NAME, ROUTING_KEY, String.valueOf(questionSubmit.getId()));
         }
 
-        // 执行判题服务
-        /*CompletableFuture.runAsync(() -> {
-
-            judgeService.doJudge(questionSubmit.getId());
-        });*/
-
         return questionSubmit.getQuestionId();
     }
 
