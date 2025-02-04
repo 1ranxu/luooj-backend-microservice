@@ -222,15 +222,13 @@ public class AcceptedQuestionServiceImpl extends ServiceImpl<AcceptedQuestionMap
 
     /**
      * 获取用户的排名（通过题目数量）
-     *
+     * @param userId
      * @param request
      * @return
      */
     @Override
-    public Long getAcceptedQuestionRanking(HttpServletRequest request) {
-        User loginUser = userFeignClient.getLoginUser(request);
+    public Long getAcceptedQuestionRanking(Long userId,HttpServletRequest request) {
         // 查询缓存
-        Long userId = loginUser.getId();
         String key = RedisKey.getKey(ACCEPTED_QUESTION_RANK_KEY);
         Long rank = stringRedisTemplate.opsForZSet().reverseRank(key, userId.toString());
         if (rank != null) return rank + 1;

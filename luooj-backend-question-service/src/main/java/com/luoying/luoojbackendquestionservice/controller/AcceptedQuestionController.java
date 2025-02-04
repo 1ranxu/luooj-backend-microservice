@@ -60,13 +60,13 @@ public class AcceptedQuestionController {
 
     /**
      * 获取用户的排名（通过题目数量）
-     *
+     * @param userId
      * @param request
      * @return
      */
     @GetMapping("/get/user_accepted_question/ranking")
-    public BaseResponse<Long> getAcceptedQuestionRanking(HttpServletRequest request) {
-        return ResultUtils.success(acceptedQuestionService.getAcceptedQuestionRanking(request));
+    public BaseResponse<Long> getAcceptedQuestionRanking(@RequestParam("userId") Long userId,HttpServletRequest request) {
+        return ResultUtils.success(acceptedQuestionService.getAcceptedQuestionRanking(userId,request));
     }
 
     /**

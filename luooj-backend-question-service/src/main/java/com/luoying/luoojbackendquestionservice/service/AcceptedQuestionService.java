@@ -49,11 +49,11 @@ public interface AcceptedQuestionService extends IService<AcceptedQuestion> {
 
     /**
      * 获取用户的排名（通过题目数量）
-     *
+     * @param userId
      * @param request
      * @return
      */
-    Long getAcceptedQuestionRanking(HttpServletRequest request);
+    Long getAcceptedQuestionRanking(Long userId,HttpServletRequest request);
 
     /**
      * 判断当前用户是否通过了某道题目
