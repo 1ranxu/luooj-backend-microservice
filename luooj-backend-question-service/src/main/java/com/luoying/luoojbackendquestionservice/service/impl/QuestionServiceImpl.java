@@ -682,10 +682,17 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         Long randomId = ThreadLocalRandom.current().nextLong(minId, maxId + 1);
 
         // 查询最接近随机 ID 的记录
-        QueryWrapper<Question> queryWrapper = new QueryWrapper<>();
-        queryWrapper.ge("id", randomId).orderByAsc("id").last("limit 1");
-        Question question = questionMapper.selectOne(queryWrapper);
-
+        QueryWrapper<Question> queryWrapper = null;
+        Question question = null;
+        if(randomId % 2 == 0){
+            queryWrapper = new QueryWrapper<>();
+            queryWrapper.ge("id", randomId).orderByAsc("id").last("limit 1");
+            question = questionMapper.selectOne(queryWrapper);
+        }else{
+            queryWrapper = new QueryWrapper<>();
+            queryWrapper.le("id", randomId).orderByAsc("id").last("limit 1");
+            question = questionMapper.selectOne(queryWrapper);
+        }
         if (question == null) {
             // 如果未找到，查询最小 ID 的记录
             queryWrapper = new QueryWrapper<>();

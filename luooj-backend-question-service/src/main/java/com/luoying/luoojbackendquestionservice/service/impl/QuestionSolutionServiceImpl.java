@@ -80,7 +80,7 @@ public class QuestionSolutionServiceImpl extends ServiceImpl<QuestionSolutionMap
         Long userId = userFeignClient.getLoginUser(request).getId();
         // 拷贝
         QuestionSolution questionSolution = BeanUtil.copyProperties(questionSolutionAddRequest, QuestionSolution.class);
-        // 获取题目标签
+        // 获取题解标签
         List<String> tags = questionSolutionAddRequest.getTags();
         if (tags != null) {
             // 转Json字符串
