@@ -266,7 +266,7 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         // 构造运行代码响应
         return RunCodeResponse.builder()
                 .output(outputList.get(0))
-                .message(executeCodeResponse.getMessage())
+                .message(executeCodeResponse.getJudgeInfo().getMessage())
                 .status(executeCodeResponse.getStatus())
                 .judgeInfo(executeCodeResponse.getJudgeInfo())
                 .build();

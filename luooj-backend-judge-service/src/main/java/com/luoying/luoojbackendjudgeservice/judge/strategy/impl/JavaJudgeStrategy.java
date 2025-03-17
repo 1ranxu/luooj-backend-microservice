@@ -3,6 +3,7 @@ package com.luoying.luoojbackendjudgeservice.judge.strategy.impl;
 import cn.hutool.json.JSONUtil;
 import com.luoying.luoojbackendjudgeservice.judge.strategy.JudgeStrategy;
 import com.luoying.luoojbackendjudgeservice.judge.strategy.context.JudgeContext;
+import com.luoying.luoojbackendmodel.codesanbox.ExecuteCodeResponse;
 import com.luoying.luoojbackendmodel.dto.question.QuestionJudgeCase;
 import com.luoying.luoojbackendmodel.dto.question.QuestionJudgeCconfig;
 import com.luoying.luoojbackendmodel.dto.question_submit.QuestionSubmitJudgeInfo;
@@ -25,7 +26,8 @@ public class JavaJudgeStrategy implements JudgeStrategy {
     @Override
     public QuestionSubmitJudgeInfo doJudge(JudgeContext judgeContext) {
         // 获取上下文信息
-        QuestionSubmitJudgeInfo judgeInfo = judgeContext.getJudgeInfo();
+        ExecuteCodeResponse executeCodeResponse = judgeContext.getExecuteCodeResponse();
+        QuestionSubmitJudgeInfo judgeInfo = executeCodeResponse.getJudgeInfo();
         List<String> inputList = judgeContext.getInputList();
         List<String> outputList = judgeContext.getOutputList();
         Question question = judgeContext.getQuestion();
@@ -35,11 +37,11 @@ public class JavaJudgeStrategy implements JudgeStrategy {
         JudgeInfoMessagenum judgeInfoMessagenum = JudgeInfoMessagenum.ACCEPTED;
         // 如果judgeInfo.getMessage()不为空，说明代码沙箱执行代码的过程中有异常
         if (judgeInfo.getMessage() != null) {
-            judgeInfoMessagenum = JudgeInfoMessagenum.getEnumByValue(judgeInfo.getMessage());
+            judgeInfoMessagenum = JudgeInfoMessagenum.getEnumByValue(executeCodeResponse.getMessage());
             QuestionSubmitJudgeInfo judgeInfoResponse = new QuestionSubmitJudgeInfo();
             judgeInfoResponse.setMessage(judgeInfoMessagenum == null ? judgeInfo.getMessage() : judgeInfoMessagenum.getValue());
-            judgeInfoResponse.setMemory(Optional.ofNullable(judgeInfo.getMemory()).orElse(500L));
-            judgeInfoResponse.setTime(judgeInfo.getTime());
+            judgeInfoResponse.setMemory(Optional.ofNullable(judgeInfo.getMemory()).orElse(-1L));
+            judgeInfoResponse.setTime(Optional.ofNullable(judgeInfo.getTime()).orElse(-1L));
             return judgeInfoResponse;
         }
         // 5.1 先判断沙箱执行的结果输出数量是否和预期输出数量相等

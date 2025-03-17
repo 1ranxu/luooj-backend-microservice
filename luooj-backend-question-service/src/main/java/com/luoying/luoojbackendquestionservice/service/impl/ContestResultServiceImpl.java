@@ -227,7 +227,7 @@ public class ContestResultServiceImpl extends ServiceImpl<ContestResultMapper, C
         // 获取输出
         List<String> outputList = Optional.ofNullable(executeCodeResponse.getOutputList()).orElse(Arrays.asList(""));
         // 构造运行代码响应
-        return RunCodeResponse.builder().output(outputList.get(0)).message(executeCodeResponse.getMessage()).status(executeCodeResponse.getStatus()).judgeInfo(executeCodeResponse.getJudgeInfo()).build();
+        return RunCodeResponse.builder().output(outputList.get(0)).message(executeCodeResponse.getJudgeInfo().getMessage()).status(executeCodeResponse.getStatus()).judgeInfo(executeCodeResponse.getJudgeInfo()).build();
     }
 
     /**

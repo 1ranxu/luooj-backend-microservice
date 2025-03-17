@@ -99,24 +99,36 @@ public class JudgeServiceImpl implements JudgeService {
         judgeContext.setInputList(inputList);
         judgeContext.setJudgeCaseList(judgeCaseList);
         judgeContext.setQuestion(question);
-        judgeContext.setJudgeInfo(executeCodeResponse.getJudgeInfo());
+        judgeContext.setExecuteCodeResponse(executeCodeResponse);
         judgeContext.setLanguage(questionSubmit.getLanguage());
         // 使用判题管理进行判题
         QuestionSubmitJudgeInfo judgeInfo = judgeManager.doJudge(judgeContext);
         // 修改提交记录表的判题状态和判题信息
         questionSubmitUpdate = new QuestionSubmit();
-        questionSubmitUpdate.setId(questionSubmitId);
-        questionSubmitUpdate.setStatus(QuestionSubmitStatusEnum.SUCCESS.getValue());
-        questionSubmitUpdate.setJudgeInfo(JSONUtil.toJsonStr(judgeInfo));
-        update = questionFeignClient.updateQuestionSubmitById(questionSubmitUpdate);
-        if (!update) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "判题状态更新失败");
+        if (executeCodeResponse.getOutputList() == null){
+            questionSubmitUpdate.setId(questionSubmitId);
+            questionSubmitUpdate.setStatus(QuestionSubmitStatusEnum.FAILURE.getValue());
+            questionSubmitUpdate.setJudgeInfo(JSONUtil.toJsonStr(judgeInfo));
+            update = questionFeignClient.updateQuestionSubmitById(questionSubmitUpdate);
+            if (!update) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "判题状态更新失败");
+            }
+        }else{
+            questionSubmitUpdate.setId(questionSubmitId);
+            questionSubmitUpdate.setStatus(QuestionSubmitStatusEnum.SUCCESS.getValue());
+            questionSubmitUpdate.setJudgeInfo(JSONUtil.toJsonStr(judgeInfo));
+            update = questionFeignClient.updateQuestionSubmitById(questionSubmitUpdate);
+            if (!update) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "判题状态更新失败");
+            }
         }
+
         return QuestionSubmitVO.objToVo(questionFeignClient.getQuestionSubmitById(questionSubmitId));
     }
 
     /**
      * 竞赛判题
+     *
      * @param contestQuestionSubmit
      * @return
      */
@@ -155,7 +167,7 @@ public class JudgeServiceImpl implements JudgeService {
         judgeContext.setInputList(inputList);
         judgeContext.setJudgeCaseList(judgeCaseList);
         judgeContext.setQuestion(question);
-        judgeContext.setJudgeInfo(executeCodeResponse.getJudgeInfo());
+        judgeContext.setExecuteCodeResponse(executeCodeResponse);
         judgeContext.setLanguage(contestQuestionSubmit.getLanguage());
         // 使用判题管理进行判题
         return judgeManager.doJudge(judgeContext);
