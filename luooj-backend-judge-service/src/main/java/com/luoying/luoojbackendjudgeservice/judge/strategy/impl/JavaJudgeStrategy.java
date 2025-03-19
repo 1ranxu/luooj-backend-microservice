@@ -61,13 +61,13 @@ public class JavaJudgeStrategy implements JudgeStrategy {
         Long timeLimit = questionJudgeCconfig.getTimeLimit();
         Long memoryLimit = questionJudgeCconfig.getMemoryLimit();
 
-        Long memory = Optional.ofNullable(judgeInfo.getMemory()).orElse(500L);
+        Long memory = judgeInfo.getMemory();
         Long time = judgeInfo.getTime();
         if (memory > memoryLimit) {
             judgeInfoMessagenum = JudgeInfoMessagenum.MEMORY_LIMIT_EXCEEDED;
         }
-        // java程序需要额外执行10秒钟
-        long JAVA_EXTRA_TIME_COST = 10000L;
+        // java程序需要额外执行1秒钟
+        long JAVA_EXTRA_TIME_COST = 1000L;
         if (time - JAVA_EXTRA_TIME_COST > timeLimit) {
             judgeInfoMessagenum = JudgeInfoMessagenum.TIME_LIMIT_EXCEEDED;
         }

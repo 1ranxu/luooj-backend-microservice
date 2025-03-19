@@ -26,7 +26,7 @@
     <select id="selectPage" resultType="com.luoying.luoojbackendmodel.entity.QuestionSubmit">
         select * from question_submit
         <where>
-           <if test="questionSubmitQueryRequest.language != null">and language like #{questionSubmitQueryRequest.language}</if>
+           <if test="questionSubmitQueryRequest.language != ''">and language like #{questionSubmitQueryRequest.language}</if>
            <if test="questionSubmitQueryRequest.questionId != null">and questionId = #{questionSubmitQueryRequest.questionId}</if>
            <if test="questionSubmitQueryRequest.userId != null">and userId = #{questionSubmitQueryRequest.userId}</if>
            <if test="questionSubmitQueryRequest.status != null">and status = #{questionSubmitQueryRequest.status}</if>
