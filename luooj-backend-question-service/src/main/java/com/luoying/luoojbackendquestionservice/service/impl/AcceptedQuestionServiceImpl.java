@@ -237,7 +237,6 @@ public class AcceptedQuestionServiceImpl extends ServiceImpl<AcceptedQuestionMap
         queryWrapper.eq(AcceptedQuestion::getUserId, userId);
         List<AcceptedQuestion> acceptedQuestionList = this.list(queryWrapper);
         stringRedisTemplate.opsForZSet().add(key, userId.toString(), acceptedQuestionList.size() * 1.0);
-        stringRedisTemplate.expire(key, ACCEPTED_QUESTION_RANK_KEY_TTL, TimeUnit.MINUTES);
         rank = stringRedisTemplate.opsForZSet().reverseRank(key, userId.toString());
         return rank + 1;
     }

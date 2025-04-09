@@ -33,7 +33,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.luoying.luoojbackendcommon.constant.RedisKey.LIKE_LIST_KEY;
 
@@ -230,71 +231,62 @@ public class QuestionCommentServiceImpl extends ServiceImpl<QuestionCommentMappe
     @Override
     public QuestionCommentVO listQuestionComment(QuestionCommentQueryRequest questionCommentQueryRequest, HttpServletRequest request) {
         QuestionCommentVO questionCommentVO = new QuestionCommentVO();
+        // 查询一级评论
+        Long questionId = questionCommentQueryRequest.getQuestionId();
         long current = questionCommentQueryRequest.getCurrent();
         long pageSize = questionCommentQueryRequest.getPageSize();
+
+        LambdaQueryWrapper<QuestionComment> queryWrapper1 = new LambdaQueryWrapper<>();
+        queryWrapper1.eq(ObjectUtils.isNotEmpty(questionId), QuestionComment::getQuestionId, questionId);
+        queryWrapper1.eq(QuestionComment::getParentId, 0);
+        queryWrapper1.orderBy(true, true, QuestionComment::getCreateTime);
+        Page<QuestionComment> firstCommentPage = new Page<>(current, pageSize);
+
+        this.page(firstCommentPage, queryWrapper1);
+        List<QuestionComment> firstCommentList = firstCommentPage.getRecords();
         // 获取登录用户id
         Long userId = userFeignClient.getLoginUser(request).getId();
-        // 根据题目id查询评论列表
-        List<QuestionComment> allList = this.list(this.getQueryWrapper(questionCommentQueryRequest));
-        // 存储所有一级评论
-        Map<Long, QuestionComment> map = new HashMap<>();
-        List<QuestionComment> result = new ArrayList<>();
-        for (QuestionComment c : allList) {
-            if (c.getParentId() == 0) { // 这是一个一级评论
+        // 遍历所有一级评论
+        for (QuestionComment first : firstCommentList) {
+            // 判断是否点赞过
+            first.setIsLike(isLiked(first.getId(), userId));
+            // 查询该条评论所属用户的信息
+            UserVO userVO = userFeignClient.getUserVO(userFeignClient.getById(first.getUserId()));
+            // 设置用户名称
+            first.setUserName(userVO.getUserName());
+            // 设置用户头像
+            first.setUserAvatar(userVO.getUserAvatar());
+            first.setChildList(new ArrayList<>());
+            // 查询一级评论的二级评论
+            LambdaQueryWrapper<QuestionComment> queryWrapper2 = new LambdaQueryWrapper<>();
+            queryWrapper2.eq(ObjectUtils.isNotEmpty(questionId), QuestionComment::getQuestionId, questionId);
+            queryWrapper2.eq(ObjectUtils.isNotEmpty(first.getId()), QuestionComment::getParentId, first.getId());
+            queryWrapper2.orderBy(true, true, QuestionComment::getCreateTime);
+            List<QuestionComment> secondCommentList = this.list(queryWrapper2);
+            // 遍历二级评论
+            for (QuestionComment second : secondCommentList) {
                 // 判断是否点赞过
-                c.setIsLike(isLiked(c.getId(), userId));
+                second.setIsLike(isLiked(second.getId(), userId));
                 // 查询该条评论所属用户的信息
-                UserVO userVO = userFeignClient.getUserVO(userFeignClient.getById(c.getUserId()));
+                userVO = userFeignClient.getUserVO(userFeignClient.getById(second.getUserId()));
                 // 设置用户名称
-                c.setUserName(userVO.getUserName());
+                second.setUserName(userVO.getUserName());
                 // 设置用户头像
-                c.setUserAvatar(userVO.getUserAvatar());
-                result.add(c);
-                map.put(c.getId(), c);
-                c.setChildList(new ArrayList<>());
-            }
-        }
-        // 存储所有二级评论
-        for (QuestionComment c : allList) {
-            if (c.getParentId() != 0) { // 这是一个二级评论
-                // 获取该二级评论的父评论
-                QuestionComment parent = map.get(c.getParentId());
-                if (parent == null) { // 二级评论的父评论有可能被删除，该二级评论也就无需返回
-                    continue;
-                }
-                // 判断是否点赞过
-                c.setIsLike(isLiked(c.getId(), userId));
-                // 查询该条评论所属用户的信息
-                UserVO userVO = userFeignClient.getUserVO(userFeignClient.getById(c.getUserId()));
-                // 设置用户名称
-                c.setUserName(userVO.getUserName());
-                // 设置用户头像
-                c.setUserAvatar(userVO.getUserAvatar());
-                if(c.getRespondUserId()!=0){
+                second.setUserAvatar(userVO.getUserAvatar());
+                if (second.getRespondUserId() != 0) {
                     // 查询该二级评论的评论对象所属人信息
-                    UserVO respondUserVO = userFeignClient.getUserVO(userFeignClient.getById(c.getRespondUserId()));
+                    UserVO respondUserVO = userFeignClient.getUserVO(userFeignClient.getById(second.getRespondUserId()));
                     // 设置评论对象所属人信息
-                    c.setRespondUserName(respondUserVO.getUserName());
+                    second.setRespondUserName(respondUserVO.getUserName());
                 }
                 // 把该评论添加到父级评论的子集评论列表中
-                parent.getChildList().add(c);
+                first.getChildList().add(second);
             }
         }
-        // 根据点赞数从大到小排序，点赞数相等，则根据评论数从大到小排序排序
-        result.sort((o1, o2) -> {
-            if (!Objects.equals(o1.getLikes(), o2.getLikes())) {
-                return (int) (o2.getLikes() - o1.getLikes());
-            } else {
-                return o2.getChildList().size() - o1.getChildList().size();
-            }
-        });
-        // 设置分页参数
-        int startIndex = Math.min((int) ((current - 1) * pageSize), result.size());
-        int endIndex = Math.min((int) (startIndex + pageSize), result.size());
         // 设置结果
-        questionCommentVO.setResult(result.subList(startIndex, endIndex));
-        questionCommentVO.setCommentNum((long) allList.size());
-        questionCommentVO.setTotal((long) result.size());
+        questionCommentVO.setResult(firstCommentList);
+        questionCommentVO.setCommentNum(this.baseMapper.selectCount(null));
+        questionCommentVO.setTotal(this.baseMapper.selectCount(queryWrapper1));
         // 返回
         return questionCommentVO;
     }
