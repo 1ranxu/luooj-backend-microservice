@@ -284,8 +284,10 @@ public class QuestionCommentServiceImpl extends ServiceImpl<QuestionCommentMappe
             }
         }
         // 设置结果
+        LambdaQueryWrapper<QuestionComment> queryWrapper3 = new LambdaQueryWrapper<>();
+        queryWrapper3.eq(ObjectUtils.isNotEmpty(questionId), QuestionComment::getQuestionId, questionId);
         questionCommentVO.setResult(firstCommentList);
-        questionCommentVO.setCommentNum(this.baseMapper.selectCount(null));
+        questionCommentVO.setCommentNum(this.baseMapper.selectCount(queryWrapper3));
         questionCommentVO.setTotal(this.baseMapper.selectCount(queryWrapper1));
         // 返回
         return questionCommentVO;
